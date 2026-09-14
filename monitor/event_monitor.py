@@ -31,7 +31,13 @@ def process_event(event):
     if alert:
         print("\n⚠ SECURITY ALERT")
         print(f"Attack Type: {alert['attack_type']}")
-        print(f"Source IP: {alert['source_ip']}")
+
+        if "source_ips" in alert:
+            print(f"Source IPs: {', '.join(alert['source_ips'])}")
+            print(f"Unique IP Count: {alert['unique_ip_count']}")
+        else:
+            print(f"Source IP: {alert['source_ip']}")
+
         print(f"Target User: {alert['target_user']}")
         print(f"Failed Attempts: {alert['failed_attempts']}")
         print(f"Severity: {alert['severity']}")
