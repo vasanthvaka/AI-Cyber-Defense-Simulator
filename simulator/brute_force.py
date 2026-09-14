@@ -17,6 +17,7 @@ distributed_attacker_ips = [ "10.0.0.51", "10.0.0.52", "10.0.0.53", "10.0.0.54",
 def create_login_event(username, ip, status):
 
     event = {
+        "event_type": "LOGIN_ATTEMPT",
         "timestamp": datetime.now().strftime("%H:%M:%S"),
         "username": username,
         "source_ip": ip,
