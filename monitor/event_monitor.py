@@ -3,6 +3,7 @@ from pathlib import Path
 
 from detector.brute_force_detector import detect_brute_force
 from detector.ddos_detector import detect_ddos
+from detector.port_scan_detector import detect_port_scan
 
 
 # Get the main project folder
@@ -42,6 +43,18 @@ def display_alert(alert):
         print(f"Request Count: {alert['request_count']}")
         print(f"Time Window: {alert['time_window']} seconds")
 
+    elif alert["attack_type"] == "PORT_SCAN":
+        print(f"Target IP: {alert['target_ip']}")
+
+        ports = ", ".join(
+            str(port)
+            for port in alert["ports_scanned"]
+        )
+
+        print(f"Ports Scanned: {ports}")
+        print(f"Unique Port Count: {alert['unique_port_count']}")
+        print(f"Time Window: {alert['time_window']} seconds")
+
     print(f"Severity: {alert['severity']}")
     print()
 
@@ -65,5 +78,8 @@ def process_event(event):
     elif event.get("event_type") == "HTTP_REQUEST":
         alert = detect_ddos(event)
 
+    elif event.get("event_type") == "NETWORK_CONNECTION":
+        alert = detect_port_scan(event)
+        
     if alert:
         display_alert(alert)
