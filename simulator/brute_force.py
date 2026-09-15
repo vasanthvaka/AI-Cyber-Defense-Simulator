@@ -55,12 +55,18 @@ def generate_distributed_brute_force():
         status="FAILED" 
     )
 
-for i in range(20):
+def run_brute_force_simulation():
 
-    if 7 <= i <= 14:
-        event = generate_distributed_brute_force()
-    else:
-        event = generate_normal_login()
+    for i in range(20):
 
-    process_event(event)
-    time.sleep(0.3)
+        if 7 <= i <= 14:
+            event = generate_distributed_brute_force()
+        else:
+            event = generate_normal_login()
+
+        process_event(event)
+        time.sleep(0.3)
+
+
+if __name__ == "__main__":
+    run_brute_force_simulation()

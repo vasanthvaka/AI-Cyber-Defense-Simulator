@@ -83,13 +83,19 @@ def generate_port_scan(destination_port):
     )
 
 
-for i in range(30):
+def run_port_scan_simulation():
 
-    if 8 <= i <= 22:
-        port = scan_ports[i - 8]
-        event = generate_port_scan(port)
-    else:
-        event = generate_normal_connection()
+    for i in range(30):
 
-    process_event(event)
-    time.sleep(0.2)
+        if 8 <= i <= 22:
+            port = scan_ports[i - 8]
+            event = generate_port_scan(port)
+        else:
+            event = generate_normal_connection()
+
+        process_event(event)
+        time.sleep(0.2)
+
+
+if __name__ == "__main__":
+    run_port_scan_simulation()

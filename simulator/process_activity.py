@@ -89,12 +89,18 @@ def generate_suspicious_process():
     )
 
 
-for i in range(12):
+def run_process_simulation():
 
-    if i == 6:
-        event = generate_suspicious_process()
-    else:
-        event = generate_normal_process()
+    for i in range(12):
 
-    process_event(event)
-    time.sleep(0.3)
+        if i == 6:
+            event = generate_suspicious_process()
+        else:
+            event = generate_normal_process()
+
+        process_event(event)
+        time.sleep(0.3)
+
+
+if __name__ == "__main__":
+    run_process_simulation()

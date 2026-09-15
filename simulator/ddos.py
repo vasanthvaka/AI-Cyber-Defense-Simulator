@@ -63,12 +63,18 @@ def generate_ddos_request():
     )
 
 
-for i in range(40):
+def run_ddos_simulation():
 
-    if 10 <= i <= 29:
-        event = generate_ddos_request()
-    else:
-        event = generate_normal_request()
+    for i in range(40):
 
-    process_event(event)
-    time.sleep(0.1)
+        if 10 <= i <= 29:
+            event = generate_ddos_request()
+        else:
+            event = generate_normal_request()
+
+        process_event(event)
+        time.sleep(0.1)
+
+
+if __name__ == "__main__":
+    run_ddos_simulation()
