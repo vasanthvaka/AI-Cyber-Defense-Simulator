@@ -1,21 +1,17 @@
 from datetime import datetime
 
 
-# Stores failure timestamps for each IP
 failed_attempts_by_ip = {}
-
-# Stores timestamp and IP for failures against each username
 failed_attempts_by_username = {}
 
-flagged_ips = set()
-flagged_usernames = set()
+flagged_ips = {}
+flagged_usernames = {}
 
 
 THRESHOLD = 5
 TIME_WINDOW = 10
-
-# At least 3 different IPs must be involved
 DISTRIBUTED_IP_THRESHOLD = 3
+ALERT_COOLDOWN = 15
 
 
 def detect_brute_force(event):
@@ -27,10 +23,7 @@ def detect_brute_force(event):
     username = event["username"]
     current_time = datetime.now().timestamp()
 
-    # -----------------------------------
     # Track failures by source IP
-    # -----------------------------------
-
     if ip not in failed_attempts_by_ip:
         failed_attempts_by_ip[ip] = []
 
@@ -42,10 +35,7 @@ def detect_brute_force(event):
         if current_time - timestamp <= TIME_WINDOW
     ]
 
-    # -----------------------------------
     # Track failures by target username
-    # -----------------------------------
-
     if username not in failed_attempts_by_username:
         failed_attempts_by_username[username] = []
 
@@ -59,15 +49,15 @@ def detect_brute_force(event):
         if current_time - attempt[0] <= TIME_WINDOW
     ]
 
-    # -----------------------------------
-    # Detect traditional brute force
-    # -----------------------------------
-
+    # Detect traditional single-IP brute force
     if (
         len(failed_attempts_by_ip[ip]) >= THRESHOLD
-        and ip not in flagged_ips
+        and (
+            ip not in flagged_ips
+            or current_time - flagged_ips[ip] >= ALERT_COOLDOWN
+        )
     ):
-        flagged_ips.add(ip)
+        flagged_ips[ip] = current_time
 
         return {
             "attack_type": "BRUTE_FORCE",
@@ -77,10 +67,7 @@ def detect_brute_force(event):
             "severity": "HIGH"
         }
 
-    # -----------------------------------
     # Detect distributed brute force
-    # -----------------------------------
-
     username_attempts = failed_attempts_by_username[username]
 
     unique_ips = {
@@ -91,9 +78,15 @@ def detect_brute_force(event):
     if (
         len(username_attempts) >= THRESHOLD
         and len(unique_ips) >= DISTRIBUTED_IP_THRESHOLD
-        and username not in flagged_usernames
+        and (
+            username not in flagged_usernames
+            or (
+                current_time - flagged_usernames[username]
+                >= ALERT_COOLDOWN
+            )
+        )
     ):
-        flagged_usernames.add(username)
+        flagged_usernames[username] = current_time
 
         return {
             "attack_type": "DISTRIBUTED_BRUTE_FORCE",

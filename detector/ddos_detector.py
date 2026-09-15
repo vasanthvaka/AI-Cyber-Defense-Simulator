@@ -2,12 +2,13 @@ from datetime import datetime
 
 
 requests_by_target = {}
-flagged_targets = set()
+flagged_targets = {}
 
 
 REQUEST_THRESHOLD = 15
 UNIQUE_IP_THRESHOLD = 5
 TIME_WINDOW = 2
+ALERT_COOLDOWN = 10
 
 
 def detect_ddos(event):
@@ -17,18 +18,17 @@ def detect_ddos(event):
     target_service = event["target_service"]
     endpoint = event["endpoint"]
 
-    # A tuple identifies the exact target
     target = (target_service, endpoint)
 
     if target not in requests_by_target:
         requests_by_target[target] = []
 
-    # Store the time and source of the current request
+    # Store request time and source IP
     requests_by_target[target].append(
         (current_time, event["source_ip"])
     )
 
-    # Remove requests outside the time window
+    # Keep only requests inside the time window
     requests_by_target[target] = [
         request
         for request in requests_by_target[target]
@@ -37,7 +37,6 @@ def detect_ddos(event):
 
     recent_requests = requests_by_target[target]
 
-    # Extract the unique source IPs
     unique_ips = {
         source_ip
         for _, source_ip in recent_requests
@@ -46,9 +45,15 @@ def detect_ddos(event):
     if (
         len(recent_requests) >= REQUEST_THRESHOLD
         and len(unique_ips) >= UNIQUE_IP_THRESHOLD
-        and target not in flagged_targets
+        and (
+            target not in flagged_targets
+            or (
+                current_time - flagged_targets[target]
+                >= ALERT_COOLDOWN
+            )
+        )
     ):
-        flagged_targets.add(target)
+        flagged_targets[target] = current_time
 
         return {
             "attack_type": "DDOS",
