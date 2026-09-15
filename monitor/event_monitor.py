@@ -4,7 +4,7 @@ from pathlib import Path
 from detector.brute_force_detector import detect_brute_force
 from detector.ddos_detector import detect_ddos
 from detector.port_scan_detector import detect_port_scan
-
+from detector.process_detector import detect_suspicious_process
 
 # Get the main project folder
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -24,26 +24,27 @@ def display_alert(alert):
     print("\n⚠ SECURITY ALERT")
     print(f"Attack Type: {alert['attack_type']}")
 
-    if "source_ips" in alert:
+    if alert["attack_type"] == "BRUTE_FORCE":
+        print(f"Source IP: {alert['source_ip']}")
+        print(f"Target User: {alert['target_user']}")
+        print(f"Failed Attempts: {alert['failed_attempts']}")
+
+    elif alert["attack_type"] == "DISTRIBUTED_BRUTE_FORCE":
         print(f"Source IPs: {', '.join(alert['source_ips'])}")
         print(f"Unique IP Count: {alert['unique_ip_count']}")
-    else:
-        print(f"Source IP: {alert['source_ip']}")
-
-    if alert["attack_type"] in [
-        "BRUTE_FORCE",
-        "DISTRIBUTED_BRUTE_FORCE"
-    ]:
         print(f"Target User: {alert['target_user']}")
         print(f"Failed Attempts: {alert['failed_attempts']}")
 
     elif alert["attack_type"] == "DDOS":
+        print(f"Source IPs: {', '.join(alert['source_ips'])}")
+        print(f"Unique IP Count: {alert['unique_ip_count']}")
         print(f"Target Service: {alert['target_service']}")
         print(f"Endpoint: {alert['endpoint']}")
         print(f"Request Count: {alert['request_count']}")
         print(f"Time Window: {alert['time_window']} seconds")
 
     elif alert["attack_type"] == "PORT_SCAN":
+        print(f"Source IP: {alert['source_ip']}")
         print(f"Target IP: {alert['target_ip']}")
 
         ports = ", ".join(
@@ -54,6 +55,20 @@ def display_alert(alert):
         print(f"Ports Scanned: {ports}")
         print(f"Unique Port Count: {alert['unique_port_count']}")
         print(f"Time Window: {alert['time_window']} seconds")
+
+    elif alert["attack_type"] == "SUSPICIOUS_PROCESS":
+        print(f"Process Name: {alert['process_name']}")
+        print(f"Process ID: {alert['process_id']}")
+        print(f"Parent Process: {alert['parent_process']}")
+        print(f"User: {alert['user']}")
+        print(f"Executable Path: {alert['executable_path']}")
+        print(f"Command Line: {alert['command_line']}")
+        print(f"Risk Score: {alert['risk_score']}")
+
+        print("Indicators:")
+
+        for indicator in alert["indicators"]:
+            print(f"  - {indicator}")
 
     print(f"Severity: {alert['severity']}")
     print()
@@ -80,6 +95,9 @@ def process_event(event):
 
     elif event.get("event_type") == "NETWORK_CONNECTION":
         alert = detect_port_scan(event)
+
+    elif event.get("event_type") == "PROCESS_ACTIVITY":
+        alert = detect_suspicious_process(event)
         
     if alert:
         display_alert(alert)
