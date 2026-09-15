@@ -2,11 +2,12 @@ from datetime import datetime
 
 
 connection_attempts = {}
-flagged_scanners = set()
+flagged_scanners = {}
 
 
 PORT_THRESHOLD = 10
 TIME_WINDOW = 5
+ALERT_COOLDOWN = 15
 
 
 def detect_port_scan(event):
@@ -17,13 +18,12 @@ def detect_port_scan(event):
     target_ip = event["target_ip"]
     destination_port = event["destination_port"]
 
-    # Track each source-target pair separately
     scanner_target = (source_ip, target_ip)
 
     if scanner_target not in connection_attempts:
         connection_attempts[scanner_target] = []
 
-    # Store the time and destination port
+    # Store attempt time and destination port
     connection_attempts[scanner_target].append(
         (current_time, destination_port)
     )
@@ -37,7 +37,6 @@ def detect_port_scan(event):
 
     recent_attempts = connection_attempts[scanner_target]
 
-    # Extract the unique ports that were attempted
     unique_ports = {
         port
         for _, port in recent_attempts
@@ -45,9 +44,15 @@ def detect_port_scan(event):
 
     if (
         len(unique_ports) >= PORT_THRESHOLD
-        and scanner_target not in flagged_scanners
+        and (
+            scanner_target not in flagged_scanners
+            or (
+                current_time - flagged_scanners[scanner_target]
+                >= ALERT_COOLDOWN
+            )
+        )
     ):
-        flagged_scanners.add(scanner_target)
+        flagged_scanners[scanner_target] = current_time
 
         return {
             "attack_type": "PORT_SCAN",
