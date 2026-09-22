@@ -5,12 +5,17 @@ from detector.brute_force_detector import detect_brute_force
 from detector.ddos_detector import detect_ddos
 from detector.port_scan_detector import detect_port_scan
 from detector.process_detector import detect_suspicious_process
+from monitor.ai_window_collector import AIWindowCollector
+
 
 # Get the main project folder
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # Location where security events will be stored
 LOG_FILE = PROJECT_ROOT / "data" / "security_events.jsonl"
+
+# Collect events into five-second windows for AI analysis
+AI_WINDOW_COLLECTOR = AIWindowCollector(window_size=5)
 
 
 def log_event(event):
@@ -70,6 +75,22 @@ def display_alert(alert):
         for indicator in alert["indicators"]:
             print(f"  - {indicator}")
 
+    elif alert["attack_type"] == "ANOMALOUS_BEHAVIOR":
+        source_ips = ", ".join(
+            alert["source_ips"]
+        )
+
+        print(
+            f"Detection Method: "
+            f"{alert['detection_method']}"
+        )
+        print(f"Anomaly Score: {alert['anomaly_score']}")
+        print(f"Event Count: {alert['event_count']}")
+        print(
+            f"Source IPs: "
+            f"{source_ips if source_ips else 'None'}"
+        )
+
     print(f"Severity: {alert['severity']}")
     print()
 
@@ -82,22 +103,42 @@ def process_event(event):
     # Display the event
     print(event)
 
-    # No detector selected initially
-    alert = None
+    # No rule-based alert selected initially
+    rule_alert = None
 
     # Route login events to the brute-force detector
     if event.get("event_type") == "LOGIN_ATTEMPT":
-        alert = detect_brute_force(event)
+        rule_alert = detect_brute_force(event)
 
     # Route HTTP events to the DDoS detector
     elif event.get("event_type") == "HTTP_REQUEST":
-        alert = detect_ddos(event)
+        rule_alert = detect_ddos(event)
 
+    # Route network events to the port-scan detector
     elif event.get("event_type") == "NETWORK_CONNECTION":
-        alert = detect_port_scan(event)
+        rule_alert = detect_port_scan(event)
 
+    # Route process events to the process detector
     elif event.get("event_type") == "PROCESS_ACTIVITY":
-        alert = detect_suspicious_process(event)
-        
-    if alert:
-        display_alert(alert)
+        rule_alert = detect_suspicious_process(event)
+
+    # Display rule-based evidence immediately
+    if rule_alert:
+        display_alert(rule_alert)
+
+    # Independently add the event to the AI window
+    ai_alert = AI_WINDOW_COLLECTOR.add_event(event)
+
+    # This alert describes the completed five-second window
+    if ai_alert:
+        display_alert(ai_alert)
+
+
+def flush_ai_window():
+
+    ai_alert = AI_WINDOW_COLLECTOR.flush()
+
+    if ai_alert:
+        display_alert(ai_alert)
+
+    return ai_alert

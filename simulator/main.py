@@ -2,7 +2,10 @@ import argparse
 import random
 import time
 
-from monitor.event_monitor import process_event
+from monitor.event_monitor import (
+    flush_ai_window,
+    process_event
+)
 
 from simulator.brute_force import (
     generate_normal_login,
@@ -98,6 +101,9 @@ def run_demo():
 
     generate_normal_activity(5, 5)
 
+    # Analyse the final incomplete AI window.
+    flush_ai_window()
+
     print("\nDemo simulation completed.\n")
 
 
@@ -128,6 +134,10 @@ def run_live():
                 attack_scenario()
 
     except KeyboardInterrupt:
+
+        # Analyse events remaining in the final AI window.
+        flush_ai_window()
+
         print("\nLive simulation stopped by the user.\n")
 
 
