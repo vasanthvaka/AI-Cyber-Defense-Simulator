@@ -18,8 +18,11 @@ TRAINING_LOG_FILE = (
 
 def generate_normal_training_data(
     window_count=200,
-    window_size=5
+    window_size=5,
+    random_seed=42
 ):
+
+    random.seed(random_seed)
 
     starting_time = datetime.now().replace(microsecond=0)
     generated_event_count = 0

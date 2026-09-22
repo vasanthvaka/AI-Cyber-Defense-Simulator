@@ -14,3 +14,5 @@ data/normal_training_events.jsonl
 
 # VS Code local settings
 .vscode/
+
+models/*.joblib

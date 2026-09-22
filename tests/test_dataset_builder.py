@@ -24,26 +24,41 @@ class TestDatasetBuilder(unittest.TestCase):
                 "timestamp": "10:00:01",
                 "event_type": "HTTP_REQUEST",
                 "source_ip": "192.168.1.20",
+                "target_service": "web-server",
                 "endpoint": "/home"
             }
         ]
 
         with tempfile.TemporaryDirectory() as temp_directory:
 
-            log_file = Path(temp_directory) / "events.jsonl"
+            log_file = (
+                Path(temp_directory)
+                / "events.jsonl"
+            )
 
-            with open(log_file, "w", encoding="utf-8") as file:
+            with open(
+                log_file,
+                "w",
+                encoding="utf-8"
+            ) as file:
+
                 for event in sample_events:
-                    file.write(json.dumps(event) + "\n")
+                    file.write(
+                        json.dumps(event) + "\n"
+                    )
 
             loaded_events = load_events(log_file)
 
-        self.assertEqual(loaded_events, sample_events)
+        self.assertEqual(
+            loaded_events,
+            sample_events
+        )
 
     def test_build_feature_dataset(self):
 
         events = [
             {
+                "username": "admin",
                 "timestamp": "10:00:00",
                 "event_type": "LOGIN_ATTEMPT",
                 "source_ip": "192.168.1.10",
@@ -53,6 +68,7 @@ class TestDatasetBuilder(unittest.TestCase):
                 "timestamp": "10:00:01",
                 "event_type": "HTTP_REQUEST",
                 "source_ip": "192.168.1.20",
+                "target_service": "web-server",
                 "endpoint": "/login"
             },
             {
@@ -79,7 +95,13 @@ class TestDatasetBuilder(unittest.TestCase):
                 0,  # network_connections
                 0,  # unique_destination_ports
                 0,  # process_activities
-                0   # unique_process_names
+                0,  # unique_process_names
+                1,  # max_failed_logins_per_user
+                1,  # max_http_requests_per_source_ip
+                1,  # max_http_requests_per_target_service
+                1,  # max_http_requests_per_endpoint
+                0,  # max_ports_per_source_ip
+                0   # max_command_line_length
             ],
             [
                 1,  # total_events
@@ -91,11 +113,20 @@ class TestDatasetBuilder(unittest.TestCase):
                 1,  # network_connections
                 1,  # unique_destination_ports
                 0,  # process_activities
-                0   # unique_process_names
+                0,  # unique_process_names
+                0,  # max_failed_logins_per_user
+                0,  # max_http_requests_per_source_ip
+                0,  # max_http_requests_per_target_service
+                0,  # max_http_requests_per_endpoint
+                1,  # max_ports_per_source_ip
+                0   # max_command_line_length
             ]
         ]
 
-        self.assertEqual(dataset, expected_dataset)
+        self.assertEqual(
+            dataset,
+            expected_dataset
+        )
 
 
 if __name__ == "__main__":
