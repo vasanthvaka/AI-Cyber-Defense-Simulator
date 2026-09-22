@@ -10,6 +10,7 @@ __pycache__/
 
 # Generated runtime logs
 data/security_events.jsonl
+data/normal_training_events.jsonl
 
 # VS Code local settings
 .vscode/
