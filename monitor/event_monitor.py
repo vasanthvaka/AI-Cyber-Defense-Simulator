@@ -8,7 +8,9 @@ from detector.ddos_detector import detect_ddos
 from detector.port_scan_detector import detect_port_scan
 from detector.process_detector import detect_suspicious_process
 from monitor.ai_window_collector import AIWindowCollector
+from collections import deque
 
+from alerting.alert_normalizer import normalize_alert
 
 # Get the main project folder
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -21,7 +23,8 @@ AI_WINDOW_COLLECTOR = AIWindowCollector(window_size=5)
 
 # Maintain simulated defensive state
 RESPONSE_AGENT = ResponseAgent()
-
+# Temporarily retain normalized alerts for future correlation
+NORMALIZED_ALERTS = deque(maxlen=1000)
 
 def log_event(event):
 
@@ -129,8 +132,18 @@ def display_response(result):
 
 def handle_alert(alert):
 
+    # Convert the detector-specific alert into
+    # the common SecurityAlert format
+    normalized_alert = normalize_alert(alert)
+
+    # Make the normalized alert available to
+    # the future correlation and analysis layer
+    NORMALIZED_ALERTS.append(normalized_alert)
+
+    # Continue displaying the original alert for now
     display_alert(alert)
 
+    # Keep the existing response pipeline working
     decision = decide_response(alert)
     result = RESPONSE_AGENT.execute(decision)
 

@@ -15,8 +15,9 @@ class TestResponsePipeline(unittest.TestCase):
 
         alert = {
             "attack_type": "PORT_SCAN",
-            "severity": "MEDIUM",
-            "source_ip": "10.0.2.50"
+            "source_ip": "10.0.2.50",
+            "target_ip": "192.168.1.100",
+            "severity": "MEDIUM"
         }
 
         with (
