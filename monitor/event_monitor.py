@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from agents.decision_agent import decide_response
+from agents.response_agent import ResponseAgent
 from detector.brute_force_detector import detect_brute_force
 from detector.ddos_detector import detect_ddos
 from detector.port_scan_detector import detect_port_scan
@@ -16,6 +18,9 @@ LOG_FILE = PROJECT_ROOT / "data" / "security_events.jsonl"
 
 # Collect events into five-second windows for AI analysis
 AI_WINDOW_COLLECTOR = AIWindowCollector(window_size=5)
+
+# Maintain simulated defensive state
+RESPONSE_AGENT = ResponseAgent()
 
 
 def log_event(event):
@@ -95,6 +100,45 @@ def display_alert(alert):
     print()
 
 
+def display_response(result):
+
+    targets = ", ".join(
+        str(target)
+        for target in result["targets"]
+    )
+
+    new_targets = ", ".join(
+        str(target)
+        for target in result["new_targets"]
+    )
+
+    print("🛡 SIMULATED RESPONSE")
+    print(f"Action: {result['action']}")
+    print(f"Status: {result['status']}")
+    print(
+        f"Targets: "
+        f"{targets if targets else 'None'}"
+    )
+    print(
+        f"New Targets: "
+        f"{new_targets if new_targets else 'None'}"
+    )
+    print(f"Automatic: {result['automatic']}")
+    print()
+
+
+def handle_alert(alert):
+
+    display_alert(alert)
+
+    decision = decide_response(alert)
+    result = RESPONSE_AGENT.execute(decision)
+
+    display_response(result)
+
+    return result
+
+
 def process_event(event):
 
     # Store every event
@@ -122,16 +166,16 @@ def process_event(event):
     elif event.get("event_type") == "PROCESS_ACTIVITY":
         rule_alert = detect_suspicious_process(event)
 
-    # Display rule-based evidence immediately
+    # Process a rule-based alert immediately
     if rule_alert:
-        display_alert(rule_alert)
+        handle_alert(rule_alert)
 
     # Independently add the event to the AI window
     ai_alert = AI_WINDOW_COLLECTOR.add_event(event)
 
-    # This alert describes the completed five-second window
+    # Process an alert from the completed AI window
     if ai_alert:
-        display_alert(ai_alert)
+        handle_alert(ai_alert)
 
 
 def flush_ai_window():
@@ -139,6 +183,6 @@ def flush_ai_window():
     ai_alert = AI_WINDOW_COLLECTOR.flush()
 
     if ai_alert:
-        display_alert(ai_alert)
+        return handle_alert(ai_alert)
 
-    return ai_alert
+    return None
