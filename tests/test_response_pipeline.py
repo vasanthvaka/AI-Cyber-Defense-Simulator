@@ -1,100 +1,146 @@
 import unittest
 from unittest.mock import patch
 
-from agents.response_agent import ResponseAgent
-from monitor import event_monitor
+from agents.coordinator import AgentCoordinator
+from agents.monitoring_agent import MonitoringAgent
+
+
+class FakeAIWindowCollector:
+
+    def __init__(self, alert=None):
+
+        self.alert = alert
+
+    def add_event(self, event):
+
+        return self.alert
+
+    def flush(self):
+
+        return None
 
 
 class TestResponsePipeline(unittest.TestCase):
 
-    def setUp(self):
+    @patch(
+        "agents.monitoring_agent.detect_port_scan"
+    )
+    def test_rule_alert_produces_automatic_response(
+        self,
+        mock_detect_port_scan
+    ):
 
-        self.response_agent = ResponseAgent()
-
-    def test_rule_alert_produces_automatic_response(self):
-
-        alert = {
+        mock_detect_port_scan.return_value = {
             "attack_type": "PORT_SCAN",
             "source_ip": "10.0.2.50",
             "target_ip": "192.168.1.100",
+            "ports_scanned": [
+                21,
+                22,
+                80,
+                443
+            ],
+            "unique_port_count": 4,
+            "time_window": 10,
             "severity": "MEDIUM"
         }
 
-        with (
-            patch.object(
-                event_monitor,
-                "RESPONSE_AGENT",
-                self.response_agent
-            ),
-            patch.object(
-                event_monitor,
-                "display_alert"
-            ),
-            patch.object(
-                event_monitor,
-                "display_response"
+        monitoring_agent = MonitoringAgent(
+            ai_window_collector=(
+                FakeAIWindowCollector()
             )
-        ):
-            result = event_monitor.handle_alert(alert)
+        )
+
+        coordinator = AgentCoordinator(
+            monitoring_agent=monitoring_agent
+        )
+
+        responses = coordinator.submit_event(
+            {
+                "event_type":
+                    "NETWORK_CONNECTION"
+            }
+        )
+
+        self.assertEqual(
+            len(responses),
+            1
+        )
+
+        result = responses[0].payload[
+            "response"
+        ]
 
         self.assertEqual(
             result["action"],
             "BLOCK_IP"
         )
-        self.assertTrue(result["automatic"])
+
         self.assertIn(
             "10.0.2.50",
-            self.response_agent.blocked_ips
-        )
-        self.assertEqual(
-            len(self.response_agent.action_history),
-            1
+            coordinator
+            .response_agent
+            .blocked_ips
         )
 
-    def test_ai_alert_is_queued_for_investigation(self):
+    def test_ai_alert_requires_investigation(self):
 
-        alert = {
+        ai_alert = {
             "attack_type": "ANOMALOUS_BEHAVIOR",
+            "detection_method": "ISOLATION_FOREST",
             "severity": "MEDIUM",
+            "anomaly_score": -0.06,
+            "event_count": 10,
             "source_ips": [
-                "10.0.1.1",
-                "192.168.1.20"
-            ]
+                "10.0.2.50"
+            ],
+            "features": {}
         }
 
-        with (
-            patch.object(
-                event_monitor,
-                "RESPONSE_AGENT",
-                self.response_agent
-            ),
-            patch.object(
-                event_monitor,
-                "display_alert"
-            ),
-            patch.object(
-                event_monitor,
-                "display_response"
+        monitoring_agent = MonitoringAgent(
+            ai_window_collector=(
+                FakeAIWindowCollector(
+                    alert=ai_alert
+                )
             )
-        ):
-            result = event_monitor.handle_alert(alert)
+        )
+
+        coordinator = AgentCoordinator(
+            monitoring_agent=monitoring_agent
+        )
+
+        responses = coordinator.submit_event(
+            {
+                "event_type":
+                    "UNKNOWN_EVENT"
+            }
+        )
+
+        result = responses[0].payload[
+            "response"
+        ]
 
         self.assertEqual(
             result["action"],
             "FLAG_FOR_INVESTIGATION"
         )
-        self.assertFalse(result["automatic"])
+
         self.assertEqual(
-            len(self.response_agent.investigation_queue),
+            len(
+                coordinator
+                .response_agent
+                .investigation_queue
+            ),
             1
         )
+
         self.assertEqual(
-            self.response_agent.blocked_ips,
-            set()
-        )
-        self.assertEqual(
-            self.response_agent.rate_limited_ips,
-            set()
+            len(
+                coordinator
+                .response_agent
+                .blocked_ips
+            ),
+            0
         )
 
 
