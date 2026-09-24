@@ -3,6 +3,7 @@ from pathlib import Path
 
 from agents.coordinator import AgentCoordinator
 from agents.monitoring_agent import MonitoringAgent
+from storage.database import SecurityDatabase
 
 
 PROJECT_ROOT = Path(
@@ -15,6 +16,11 @@ LOG_FILE = (
     / "security_events.jsonl"
 )
 
+DATABASE_FILE = (
+    PROJECT_ROOT
+    / "data"
+    / "security_defense.db"
+)
 
 def log_event(event):
 
@@ -33,10 +39,14 @@ MONITORING_AGENT = MonitoringAgent(
     event_logger=log_event
 )
 
-AGENT_COORDINATOR = AgentCoordinator(
-    monitoring_agent=MONITORING_AGENT
+SECURITY_DATABASE = SecurityDatabase(
+    DATABASE_FILE
 )
 
+AGENT_COORDINATOR = AgentCoordinator(
+    monitoring_agent=MONITORING_AGENT,
+    database=SECURITY_DATABASE
+)
 
 def display_agent_result(
     response_message

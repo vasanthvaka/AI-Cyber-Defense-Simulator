@@ -16,3 +16,8 @@ data/normal_training_events.jsonl
 .vscode/
 
 models/*.joblib
+
+# Generated SQLite databases
+*.db
+*.db-shm
+*.db-wal

@@ -15,7 +15,8 @@ class AgentCoordinator:
         analysis_agent=None,
         decision_agent=None,
         response_agent=None,
-        max_messages_per_run=10000
+        max_messages_per_run=10000,
+        database=None
     ):
 
         if not isinstance(
@@ -57,6 +58,8 @@ class AgentCoordinator:
             else ResponseAgent()
         )
 
+        self.database = database
+
         self.agents = {
             "MONITORING_AGENT":
                 self.monitoring_agent,
@@ -73,6 +76,7 @@ class AgentCoordinator:
         )
 
         self.message_queue = deque()
+
         self.message_history = deque(
             maxlen=5000
         )
@@ -95,6 +99,9 @@ class AgentCoordinator:
                 "Submitted event must be a "
                 "dictionary"
             )
+
+        if self.database is not None:
+            self.database.save_event(event)
 
         response_count_before = len(
             self.completed_responses
@@ -216,9 +223,11 @@ class AgentCoordinator:
         self.routed_message_count += 1
 
         if message.recipient == "COORDINATOR":
+
             self._handle_coordinator_message(
                 message
             )
+
             return
 
         agent = self.agents.get(
@@ -249,11 +258,18 @@ class AgentCoordinator:
             == "RESPONSE_EXECUTED"
         ):
 
+            if self.database is not None:
+
+                self._persist_pipeline_result(
+                    message.payload
+                )
+
             self.completed_responses.append(
                 message
             )
 
             message.mark_processed()
+
             return
 
         if message.message_type == "ERROR":
@@ -275,6 +291,7 @@ class AgentCoordinator:
             )
 
             message.mark_processed()
+
             return
 
         message.mark_failed()
@@ -285,7 +302,98 @@ class AgentCoordinator:
             f"{message.message_type}"
         )
 
-    def _drain_agent_outbox(self, agent):
+    def _persist_pipeline_result(
+        self,
+        payload
+    ):
+
+        incident = payload.get(
+            "incident"
+        )
+
+        analysis = payload.get(
+            "analysis"
+        )
+
+        decision = payload.get(
+            "decision"
+        )
+
+        response = payload.get(
+            "response"
+        )
+
+        if not isinstance(
+            incident,
+            dict
+        ):
+            raise TypeError(
+                "Completed pipeline result must "
+                "contain an incident dictionary"
+            )
+
+        if not isinstance(
+            analysis,
+            dict
+        ):
+            raise TypeError(
+                "Completed pipeline result must "
+                "contain an analysis dictionary"
+            )
+
+        if not isinstance(
+            decision,
+            dict
+        ):
+            raise TypeError(
+                "Completed pipeline result must "
+                "contain a decision dictionary"
+            )
+
+        if not isinstance(
+            response,
+            dict
+        ):
+            raise TypeError(
+                "Completed pipeline result must "
+                "contain a response dictionary"
+            )
+
+        for alert in incident.get(
+            "alerts",
+            []
+        ):
+
+            self.database.save_alert(
+                alert
+            )
+
+        self.database.save_incident(
+            incident
+        )
+
+        self.database.save_analysis(
+            analysis
+        )
+
+        self.database.save_decision(
+            decision
+        )
+
+        self.database.save_response(
+            response
+        )
+
+        if response.get("audit_id"):
+
+            self.database.save_audit_record(
+                response
+            )
+
+    def _drain_agent_outbox(
+        self,
+        agent
+    ):
 
         while True:
 
@@ -301,7 +409,10 @@ class AgentCoordinator:
                 outgoing_message
             )
 
-    def _enqueue_message(self, message):
+    def _enqueue_message(
+        self,
+        message
+    ):
 
         if not isinstance(
             message,
@@ -312,5 +423,10 @@ class AgentCoordinator:
                 "can enter the message queue"
             )
 
-        self.message_queue.append(message)
-        self.message_history.append(message)
+        self.message_queue.append(
+            message
+        )
+
+        self.message_history.append(
+            message
+        )
