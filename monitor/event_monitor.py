@@ -11,6 +11,7 @@ from monitor.ai_window_collector import AIWindowCollector
 from collections import deque
 
 from alerting.alert_normalizer import normalize_alert
+from alerting.alert_correlator import AlertCorrelator
 
 # Get the main project folder
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -23,8 +24,14 @@ AI_WINDOW_COLLECTOR = AIWindowCollector(window_size=5)
 
 # Maintain simulated defensive state
 RESPONSE_AGENT = ResponseAgent()
+
 # Temporarily retain normalized alerts for future correlation
 NORMALIZED_ALERTS = deque(maxlen=1000)
+
+# Group related normalized alerts into incidents
+INCIDENT_CORRELATOR = AlertCorrelator(
+    correlation_window=30
+)
 
 def log_event(event):
 
@@ -102,6 +109,66 @@ def display_alert(alert):
     print(f"Severity: {alert['severity']}")
     print()
 
+def display_incident(
+    incident,
+    is_new_incident
+):
+
+    if is_new_incident:
+        update_type = "CREATED"
+    else:
+        update_type = "UPDATED"
+
+    source_values = ", ".join(
+        (
+            f"{source.entity_type}="
+            f"{source.value}"
+        )
+        for source in incident.sources
+    )
+
+    target_values = ", ".join(
+        (
+            f"{target.entity_type}="
+            f"{target.value}"
+        )
+        for target in incident.targets
+    )
+
+    detection_methods = ", ".join(
+        incident.detection_methods
+    )
+
+    print("🔗 CORRELATED INCIDENT")
+    print(f"Update: {update_type}")
+    print(
+        f"Incident ID: "
+        f"{incident.incident_id}"
+    )
+    print(
+        f"Incident Type: "
+        f"{incident.incident_type}"
+    )
+    print(
+        f"Supporting Alerts: "
+        f"{len(incident.alerts)}"
+    )
+    print(
+        f"Detection Methods: "
+        f"{detection_methods}"
+    )
+    print(
+        f"Sources: "
+        f"{source_values if source_values else 'None'}"
+    )
+    print(
+        f"Targets: "
+        f"{target_values if target_values else 'None'}"
+    )
+    print(f"Severity: {incident.severity}")
+    print(f"Confidence: {incident.confidence}")
+    print(f"Status: {incident.status}")
+    print()
 
 def display_response(result):
 
@@ -132,18 +199,32 @@ def display_response(result):
 
 def handle_alert(alert):
 
-    # Convert the detector-specific alert into
-    # the common SecurityAlert format
     normalized_alert = normalize_alert(alert)
 
-    # Make the normalized alert available to
-    # the future correlation and analysis layer
-    NORMALIZED_ALERTS.append(normalized_alert)
+    NORMALIZED_ALERTS.append(
+        normalized_alert
+    )
 
-    # Continue displaying the original alert for now
+    incident_count_before = len(
+        INCIDENT_CORRELATOR.incidents
+    )
+
+    incident = INCIDENT_CORRELATOR.correlate(
+        normalized_alert
+    )
+
+    is_new_incident = (
+        len(INCIDENT_CORRELATOR.incidents)
+        > incident_count_before
+    )
+
     display_alert(alert)
 
-    # Keep the existing response pipeline working
+    display_incident(
+        incident,
+        is_new_incident
+    )
+
     decision = decide_response(alert)
     result = RESPONSE_AGENT.execute(decision)
 
