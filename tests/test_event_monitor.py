@@ -1,242 +1,208 @@
 import json
+import tempfile
 import unittest
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from monitor import event_monitor as monitor
+from monitor import event_monitor
 
 
 class TestEventMonitor(unittest.TestCase):
 
-    def test_login_event_routes_to_brute_force_detector(self):
+    @patch("builtins.print")
+    def test_process_event_submits_to_coordinator(
+        self,
+        mock_print
+    ):
 
         event = {
             "event_type": "LOGIN_ATTEMPT",
-            "status": "SUCCESS"
+            "username": "admin",
+            "source_ip": "10.0.0.50",
+            "status": "FAILED"
         }
 
-        with (
-            patch.object(monitor, "log_event"),
-            patch.object(
-                monitor,
-                "detect_brute_force",
-                return_value=None
-            ) as brute_detector,
-            patch.object(
-                monitor,
-                "detect_ddos",
-                return_value=None
-            ) as ddos_detector,
-            patch.object(
-                monitor,
-                "detect_port_scan",
-                return_value=None
-            ) as port_detector,
-            patch.object(
-                monitor,
-                "detect_suspicious_process",
-                return_value=None
-            ) as process_detector,
-            patch("builtins.print")
-        ):
-            monitor.process_event(event)
+        with patch.object(
+            event_monitor.AGENT_COORDINATOR,
+            "submit_event",
+            return_value=[]
+        ) as submit_event:
 
-        brute_detector.assert_called_once_with(event)
-        ddos_detector.assert_not_called()
-        port_detector.assert_not_called()
-        process_detector.assert_not_called()
+            result = event_monitor.process_event(
+                event
+            )
 
-    def test_http_event_routes_to_ddos_detector(self):
+        submit_event.assert_called_once_with(
+            event
+        )
+
+        self.assertEqual(
+            result,
+            []
+        )
+
+        mock_print.assert_called_once_with(
+            event
+        )
+
+    @patch("builtins.print")
+    @patch(
+        "monitor.event_monitor.display_agent_result"
+    )
+    def test_process_event_displays_every_response(
+        self,
+        mock_display_agent_result,
+        mock_print
+    ):
 
         event = {
-            "event_type": "HTTP_REQUEST"
+            "event_type":
+                "NETWORK_CONNECTION"
         }
 
-        with (
-            patch.object(monitor, "log_event"),
-            patch.object(
-                monitor,
-                "detect_brute_force",
-                return_value=None
-            ) as brute_detector,
-            patch.object(
-                monitor,
-                "detect_ddos",
-                return_value=None
-            ) as ddos_detector,
-            patch.object(
-                monitor,
-                "detect_port_scan",
-                return_value=None
-            ) as port_detector,
-            patch.object(
-                monitor,
-                "detect_suspicious_process",
-                return_value=None
-            ) as process_detector,
-            patch("builtins.print")
+        first_response = object()
+        second_response = object()
+
+        responses = [
+            first_response,
+            second_response
+        ]
+
+        with patch.object(
+            event_monitor.AGENT_COORDINATOR,
+            "submit_event",
+            return_value=responses
         ):
-            monitor.process_event(event)
 
-        brute_detector.assert_not_called()
-        ddos_detector.assert_called_once_with(event)
-        port_detector.assert_not_called()
-        process_detector.assert_not_called()
+            result = event_monitor.process_event(
+                event
+            )
 
-    def test_network_event_routes_to_port_scan_detector(self):
+        self.assertEqual(
+            result,
+            responses
+        )
 
-        event = {
-            "event_type": "NETWORK_CONNECTION"
-        }
+        self.assertEqual(
+            mock_display_agent_result.call_count,
+            2
+        )
 
-        with (
-            patch.object(monitor, "log_event"),
-            patch.object(
-                monitor,
-                "detect_brute_force",
-                return_value=None
-            ) as brute_detector,
-            patch.object(
-                monitor,
-                "detect_ddos",
-                return_value=None
-            ) as ddos_detector,
-            patch.object(
-                monitor,
-                "detect_port_scan",
-                return_value=None
-            ) as port_detector,
-            patch.object(
-                monitor,
-                "detect_suspicious_process",
-                return_value=None
-            ) as process_detector,
-            patch("builtins.print")
-        ):
-            monitor.process_event(event)
+        mock_display_agent_result.assert_any_call(
+            first_response
+        )
 
-        brute_detector.assert_not_called()
-        ddos_detector.assert_not_called()
-        port_detector.assert_called_once_with(event)
-        process_detector.assert_not_called()
+        mock_display_agent_result.assert_any_call(
+            second_response
+        )
 
-    def test_process_event_routes_to_process_detector(self):
-
-        event = {
-            "event_type": "PROCESS_ACTIVITY"
-        }
-
-        with (
-            patch.object(monitor, "log_event"),
-            patch.object(
-                monitor,
-                "detect_brute_force",
-                return_value=None
-            ) as brute_detector,
-            patch.object(
-                monitor,
-                "detect_ddos",
-                return_value=None
-            ) as ddos_detector,
-            patch.object(
-                monitor,
-                "detect_port_scan",
-                return_value=None
-            ) as port_detector,
-            patch.object(
-                monitor,
-                "detect_suspicious_process",
-                return_value=None
-            ) as process_detector,
-            patch("builtins.print")
-        ):
-            monitor.process_event(event)
-
-        brute_detector.assert_not_called()
-        ddos_detector.assert_not_called()
-        port_detector.assert_not_called()
-        process_detector.assert_called_once_with(event)
-
-    def test_unknown_event_is_logged_but_not_detected(self):
+    @patch("builtins.print")
+    @patch(
+        "monitor.event_monitor.display_agent_result"
+    )
+    def test_normal_event_displays_no_result(
+        self,
+        mock_display_agent_result,
+        mock_print
+    ):
 
         event = {
             "event_type": "UNKNOWN_EVENT"
         }
 
-        with (
-            patch.object(monitor, "log_event") as log_event,
-            patch.object(
-                monitor,
-                "detect_brute_force",
-                return_value=None
-            ) as brute_detector,
-            patch.object(
-                monitor,
-                "detect_ddos",
-                return_value=None
-            ) as ddos_detector,
-            patch.object(
-                monitor,
-                "detect_port_scan",
-                return_value=None
-            ) as port_detector,
-            patch.object(
-                monitor,
-                "detect_suspicious_process",
-                return_value=None
-            ) as process_detector,
-            patch("builtins.print")
+        with patch.object(
+            event_monitor.AGENT_COORDINATOR,
+            "submit_event",
+            return_value=[]
         ):
-            monitor.process_event(event)
 
-        log_event.assert_called_once_with(event)
-        brute_detector.assert_not_called()
-        ddos_detector.assert_not_called()
-        port_detector.assert_not_called()
-        process_detector.assert_not_called()
+            result = event_monitor.process_event(
+                event
+            )
 
-    def test_log_event_creates_valid_jsonl(self):
+        self.assertEqual(
+            result,
+            []
+        )
 
-        events = [
-            {
-                "event_type": "LOGIN_ATTEMPT",
-                "status": "SUCCESS"
-            },
-            {
-                "event_type": "HTTP_REQUEST",
-                "method": "GET"
-            }
+        mock_display_agent_result.assert_not_called()
+
+    @patch(
+        "monitor.event_monitor.display_agent_result"
+    )
+    def test_flush_uses_coordinator(
+        self,
+        mock_display_agent_result
+    ):
+
+        first_response = object()
+        second_response = object()
+
+        responses = [
+            first_response,
+            second_response
         ]
 
-        with TemporaryDirectory() as directory:
+        with patch.object(
+            event_monitor.AGENT_COORDINATOR,
+            "flush_ai_window",
+            return_value=responses
+        ) as flush_ai_window:
 
-            temporary_log = (
-                Path(directory) / "security_events.jsonl"
+            result = (
+                event_monitor.flush_ai_window()
+            )
+
+        flush_ai_window.assert_called_once_with()
+
+        self.assertEqual(
+            result,
+            responses
+        )
+
+        self.assertEqual(
+            mock_display_agent_result.call_count,
+            2
+        )
+
+    def test_log_event_writes_json_line(self):
+
+        event = {
+            "event_type": "LOGIN_ATTEMPT",
+            "username": "admin",
+            "source_ip": "10.0.0.50",
+            "status": "FAILED"
+        }
+
+        with tempfile.TemporaryDirectory() as directory:
+
+            temporary_log_file = (
+                Path(directory)
+                / "security_events.jsonl"
             )
 
             with patch.object(
-                monitor,
+                event_monitor,
                 "LOG_FILE",
-                temporary_log
+                temporary_log_file
             ):
-                for event in events:
-                    monitor.log_event(event)
+
+                event_monitor.log_event(event)
 
             with open(
-                temporary_log,
+                temporary_log_file,
                 "r",
                 encoding="utf-8"
             ) as file:
-                lines = file.readlines()
 
-        self.assertEqual(len(lines), 2)
+                stored_event = json.loads(
+                    file.readline()
+                )
 
-        first_event = json.loads(lines[0])
-        second_event = json.loads(lines[1])
-
-        self.assertEqual(first_event, events[0])
-        self.assertEqual(second_event, events[1])
+        self.assertEqual(
+            stored_event,
+            event
+        )
 
 
 if __name__ == "__main__":

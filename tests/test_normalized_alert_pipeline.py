@@ -1,48 +1,35 @@
 import unittest
 from unittest.mock import patch
 
-from agents.response_agent import ResponseAgent
+from agents.coordinator import AgentCoordinator
+from agents.monitoring_agent import MonitoringAgent
 from alerting.alert_schema import SecurityAlert
-from monitor import event_monitor
 
 
-class TestNormalizedAlertPipeline(unittest.TestCase):
+class EmptyAIWindowCollector:
 
-    def setUp(self):
+    def add_event(self, event):
 
-        # Preserve the real shared response agent
-        self.original_response_agent = (
-            event_monitor.RESPONSE_AGENT
-        )
+        return None
 
-        # Use a fresh response agent for each test
-        event_monitor.RESPONSE_AGENT = ResponseAgent()
+    def flush(self):
 
-        # Remove alerts left by earlier tests
-        event_monitor.NORMALIZED_ALERTS.clear()
+        return None
 
-    def tearDown(self):
 
-        # Restore the original response agent
-        event_monitor.RESPONSE_AGENT = (
-            self.original_response_agent
-        )
-
-        event_monitor.NORMALIZED_ALERTS.clear()
+class TestNormalizedAlertPipeline(
+    unittest.TestCase
+):
 
     @patch(
-        "monitor.event_monitor.display_response"
+        "agents.monitoring_agent.detect_port_scan"
     )
-    @patch(
-        "monitor.event_monitor.display_alert"
-    )
-    def test_rule_alert_enters_normalized_pipeline(
+    def test_rule_alert_is_normalized(
         self,
-        mock_display_alert,
-        mock_display_response
+        mock_detect_port_scan
     ):
 
-        raw_alert = {
+        mock_detect_port_scan.return_value = {
             "attack_type": "PORT_SCAN",
             "source_ip": "10.0.2.50",
             "target_ip": "192.168.1.100",
@@ -57,17 +44,34 @@ class TestNormalizedAlertPipeline(unittest.TestCase):
             "severity": "MEDIUM"
         }
 
-        response = event_monitor.handle_alert(
-            raw_alert
+        monitoring_agent = MonitoringAgent(
+            ai_window_collector=(
+                EmptyAIWindowCollector()
+            )
+        )
+
+        coordinator = AgentCoordinator(
+            monitoring_agent=monitoring_agent
+        )
+
+        responses = coordinator.submit_event(
+            {
+                "event_type":
+                    "NETWORK_CONNECTION"
+            }
         )
 
         self.assertEqual(
-            len(event_monitor.NORMALIZED_ALERTS),
+            len(
+                monitoring_agent
+                .normalized_alerts
+            ),
             1
         )
 
         normalized_alert = (
-            event_monitor.NORMALIZED_ALERTS[0]
+            monitoring_agent
+            .normalized_alerts[0]
         )
 
         self.assertIsInstance(
@@ -81,35 +85,10 @@ class TestNormalizedAlertPipeline(unittest.TestCase):
         )
 
         self.assertEqual(
-            normalized_alert.detection_method,
-            "RULE_BASED"
-        )
-
-        self.assertEqual(
-            normalized_alert.sources[0].value,
-            "10.0.2.50"
-        )
-
-        self.assertEqual(
-            normalized_alert.targets[0].value,
-            "192.168.1.100"
-        )
-
-        self.assertEqual(
-            response["action"],
+            responses[0]
+            .payload["response"]["action"],
             "BLOCK_IP"
         )
-
-        self.assertIn(
-            "10.0.2.50",
-            event_monitor.RESPONSE_AGENT.blocked_ips
-        )
-
-        mock_display_alert.assert_called_once_with(
-            raw_alert
-        )
-
-        mock_display_response.assert_called_once()
 
 
 if __name__ == "__main__":

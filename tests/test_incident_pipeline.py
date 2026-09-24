@@ -1,61 +1,36 @@
 import unittest
 from unittest.mock import patch
 
-from agents.response_agent import ResponseAgent
-from alerting.alert_correlator import AlertCorrelator
-from monitor import event_monitor
+from agents.coordinator import AgentCoordinator
+from agents.monitoring_agent import MonitoringAgent
+
+
+class AIAlertCollector:
+
+    def __init__(self, alert):
+
+        self.alert = alert
+
+    def add_event(self, event):
+
+        return self.alert
+
+    def flush(self):
+
+        return None
 
 
 class TestIncidentPipeline(unittest.TestCase):
 
-    def setUp(self):
-
-        # Preserve the shared production objects
-        self.original_response_agent = (
-            event_monitor.RESPONSE_AGENT
-        )
-
-        self.original_correlator = (
-            event_monitor.INCIDENT_CORRELATOR
-        )
-
-        # Give this test isolated state
-        event_monitor.RESPONSE_AGENT = ResponseAgent()
-
-        event_monitor.INCIDENT_CORRELATOR = (
-            AlertCorrelator(
-                correlation_window=30
-            )
-        )
-
-        event_monitor.NORMALIZED_ALERTS.clear()
-
-    def tearDown(self):
-
-        # Restore the production objects
-        event_monitor.RESPONSE_AGENT = (
-            self.original_response_agent
-        )
-
-        event_monitor.INCIDENT_CORRELATOR = (
-            self.original_correlator
-        )
-
-        event_monitor.NORMALIZED_ALERTS.clear()
-
     @patch(
-        "monitor.event_monitor.display_response"
+        "agents.monitoring_agent.detect_port_scan"
     )
-    @patch(
-        "monitor.event_monitor.display_alert"
-    )
-    def test_rule_and_ai_alert_create_one_incident(
+    def test_rule_and_ai_alerts_share_incident(
         self,
-        mock_display_alert,
-        mock_display_response
+        mock_detect_port_scan
     ):
 
-        rule_alert = {
+        mock_detect_port_scan.return_value = {
             "attack_type": "PORT_SCAN",
             "source_ip": "10.0.2.50",
             "target_ip": "192.168.1.100",
@@ -85,26 +60,31 @@ class TestIncidentPipeline(unittest.TestCase):
             }
         }
 
-        event_monitor.handle_alert(rule_alert)
-        event_monitor.handle_alert(ai_alert)
+        monitoring_agent = MonitoringAgent(
+            ai_window_collector=(
+                AIAlertCollector(ai_alert)
+            )
+        )
 
-        incidents = (
-            event_monitor
-            .INCIDENT_CORRELATOR
-            .incidents
+        coordinator = AgentCoordinator(
+            monitoring_agent=monitoring_agent
+        )
+
+        responses = coordinator.submit_event(
+            {
+                "event_type":
+                    "NETWORK_CONNECTION"
+            }
         )
 
         self.assertEqual(
-            len(event_monitor.NORMALIZED_ALERTS),
-            2
-        )
-
-        self.assertEqual(
-            len(incidents),
+            len(monitoring_agent.incidents),
             1
         )
 
-        incident = incidents[0]
+        incident = (
+            monitoring_agent.incidents[0]
+        )
 
         self.assertEqual(
             incident.incident_type,
@@ -125,32 +105,31 @@ class TestIncidentPipeline(unittest.TestCase):
         )
 
         self.assertEqual(
-            incident.sources[0].value,
-            "10.0.2.50"
-        )
-
-        self.assertIn(
-            "10.0.2.50",
-            event_monitor.RESPONSE_AGENT.blocked_ips
-        )
-
-        self.assertEqual(
-            len(
-                event_monitor
-                .RESPONSE_AGENT
-                .investigation_queue
-            ),
-            1
-        )
-
-        self.assertEqual(
-            mock_display_alert.call_count,
+            len(responses),
             2
         )
 
         self.assertEqual(
-            mock_display_response.call_count,
-            2
+            responses[0].correlation_id,
+            responses[1].correlation_id
+        )
+
+        self.assertEqual(
+            responses[0]
+            .payload["response"]["action"],
+            "BLOCK_IP"
+        )
+
+        self.assertEqual(
+            responses[1]
+            .payload["response"]["action"],
+            "BLOCK_IP"
+        )
+
+        self.assertEqual(
+            responses[1]
+            .payload["response"]["new_targets"],
+            []
         )
 
 

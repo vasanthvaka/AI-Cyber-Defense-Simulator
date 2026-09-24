@@ -1,282 +1,200 @@
 import json
 from pathlib import Path
 
-from agents.decision_agent import decide_response
-from agents.response_agent import ResponseAgent
-from detector.brute_force_detector import detect_brute_force
-from detector.ddos_detector import detect_ddos
-from detector.port_scan_detector import detect_port_scan
-from detector.process_detector import detect_suspicious_process
-from monitor.ai_window_collector import AIWindowCollector
-from collections import deque
+from agents.coordinator import AgentCoordinator
+from agents.monitoring_agent import MonitoringAgent
 
-from alerting.alert_normalizer import normalize_alert
-from alerting.alert_correlator import AlertCorrelator
 
-# Get the main project folder
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(
+    __file__
+).resolve().parent.parent
 
-# Location where security events will be stored
-LOG_FILE = PROJECT_ROOT / "data" / "security_events.jsonl"
-
-# Collect events into five-second windows for AI analysis
-AI_WINDOW_COLLECTOR = AIWindowCollector(window_size=5)
-
-# Maintain simulated defensive state
-RESPONSE_AGENT = ResponseAgent()
-
-# Temporarily retain normalized alerts for future correlation
-NORMALIZED_ALERTS = deque(maxlen=1000)
-
-# Group related normalized alerts into incidents
-INCIDENT_CORRELATOR = AlertCorrelator(
-    correlation_window=30
+LOG_FILE = (
+    PROJECT_ROOT
+    / "data"
+    / "security_events.jsonl"
 )
+
 
 def log_event(event):
 
-    with open(LOG_FILE, "a", encoding="utf-8") as file:
-        file.write(json.dumps(event) + "\n")
+    with open(
+        LOG_FILE,
+        "a",
+        encoding="utf-8"
+    ) as file:
 
-
-def display_alert(alert):
-
-    print("\n⚠ SECURITY ALERT")
-    print(f"Attack Type: {alert['attack_type']}")
-
-    if alert["attack_type"] == "BRUTE_FORCE":
-        print(f"Source IP: {alert['source_ip']}")
-        print(f"Target User: {alert['target_user']}")
-        print(f"Failed Attempts: {alert['failed_attempts']}")
-
-    elif alert["attack_type"] == "DISTRIBUTED_BRUTE_FORCE":
-        print(f"Source IPs: {', '.join(alert['source_ips'])}")
-        print(f"Unique IP Count: {alert['unique_ip_count']}")
-        print(f"Target User: {alert['target_user']}")
-        print(f"Failed Attempts: {alert['failed_attempts']}")
-
-    elif alert["attack_type"] == "DDOS":
-        print(f"Source IPs: {', '.join(alert['source_ips'])}")
-        print(f"Unique IP Count: {alert['unique_ip_count']}")
-        print(f"Target Service: {alert['target_service']}")
-        print(f"Endpoint: {alert['endpoint']}")
-        print(f"Request Count: {alert['request_count']}")
-        print(f"Time Window: {alert['time_window']} seconds")
-
-    elif alert["attack_type"] == "PORT_SCAN":
-        print(f"Source IP: {alert['source_ip']}")
-        print(f"Target IP: {alert['target_ip']}")
-
-        ports = ", ".join(
-            str(port)
-            for port in alert["ports_scanned"]
+        file.write(
+            json.dumps(event) + "\n"
         )
 
-        print(f"Ports Scanned: {ports}")
-        print(f"Unique Port Count: {alert['unique_port_count']}")
-        print(f"Time Window: {alert['time_window']} seconds")
 
-    elif alert["attack_type"] == "SUSPICIOUS_PROCESS":
-        print(f"Process Name: {alert['process_name']}")
-        print(f"Process ID: {alert['process_id']}")
-        print(f"Parent Process: {alert['parent_process']}")
-        print(f"User: {alert['user']}")
-        print(f"Executable Path: {alert['executable_path']}")
-        print(f"Command Line: {alert['command_line']}")
-        print(f"Risk Score: {alert['risk_score']}")
+MONITORING_AGENT = MonitoringAgent(
+    event_logger=log_event
+)
 
-        print("Indicators:")
+AGENT_COORDINATOR = AgentCoordinator(
+    monitoring_agent=MONITORING_AGENT
+)
 
-        for indicator in alert["indicators"]:
-            print(f"  - {indicator}")
 
-    elif alert["attack_type"] == "ANOMALOUS_BEHAVIOR":
-        source_ips = ", ".join(
-            alert["source_ips"]
-        )
-
-        print(
-            f"Detection Method: "
-            f"{alert['detection_method']}"
-        )
-        print(f"Anomaly Score: {alert['anomaly_score']}")
-        print(f"Event Count: {alert['event_count']}")
-        print(
-            f"Source IPs: "
-            f"{source_ips if source_ips else 'None'}"
-        )
-
-    print(f"Severity: {alert['severity']}")
-    print()
-
-def display_incident(
-    incident,
-    is_new_incident
+def display_agent_result(
+    response_message
 ):
 
-    if is_new_incident:
-        update_type = "CREATED"
-    else:
-        update_type = "UPDATED"
+    payload = response_message.payload
 
-    source_values = ", ".join(
+    incident = payload["incident"]
+    analysis = payload["analysis"]
+    decision = payload["decision"]
+    response = payload["response"]
+
+    sources = ", ".join(
         (
-            f"{source.entity_type}="
-            f"{source.value}"
+            f"{entity['entity_type']}="
+            f"{entity['value']}"
         )
-        for source in incident.sources
+        for entity in incident["sources"]
     )
-
-    target_values = ", ".join(
-        (
-            f"{target.entity_type}="
-            f"{target.value}"
-        )
-        for target in incident.targets
-    )
-
-    detection_methods = ", ".join(
-        incident.detection_methods
-    )
-
-    print("🔗 CORRELATED INCIDENT")
-    print(f"Update: {update_type}")
-    print(
-        f"Incident ID: "
-        f"{incident.incident_id}"
-    )
-    print(
-        f"Incident Type: "
-        f"{incident.incident_type}"
-    )
-    print(
-        f"Supporting Alerts: "
-        f"{len(incident.alerts)}"
-    )
-    print(
-        f"Detection Methods: "
-        f"{detection_methods}"
-    )
-    print(
-        f"Sources: "
-        f"{source_values if source_values else 'None'}"
-    )
-    print(
-        f"Targets: "
-        f"{target_values if target_values else 'None'}"
-    )
-    print(f"Severity: {incident.severity}")
-    print(f"Confidence: {incident.confidence}")
-    print(f"Status: {incident.status}")
-    print()
-
-def display_response(result):
 
     targets = ", ".join(
+        (
+            f"{entity['entity_type']}="
+            f"{entity['value']}"
+        )
+        for entity in incident["targets"]
+    )
+
+    methods = ", ".join(
+        analysis["detection_methods"]
+    )
+
+    response_targets = ", ".join(
         str(target)
-        for target in result["targets"]
+        for target in response["targets"]
     )
 
     new_targets = ", ".join(
         str(target)
-        for target in result["new_targets"]
+        for target in response[
+            "new_targets"
+        ]
     )
 
-    print("🛡 SIMULATED RESPONSE")
-    print(f"Action: {result['action']}")
-    print(f"Status: {result['status']}")
+    print("\n🤖 MULTI-AGENT SECURITY RESULT")
+
+    print(
+        f"Incident ID: "
+        f"{incident['incident_id']}"
+    )
+
+    print(
+        f"Incident Type: "
+        f"{incident['incident_type']}"
+    )
+
+    print(
+        f"Supporting Alerts: "
+        f"{len(incident['alerts'])}"
+    )
+
+    print(
+        f"Detection Methods: "
+        f"{methods if methods else 'None'}"
+    )
+
+    print(
+        f"Sources: "
+        f"{sources if sources else 'None'}"
+    )
+
     print(
         f"Targets: "
         f"{targets if targets else 'None'}"
     )
+
+    print(
+        f"Risk Score: "
+        f"{analysis['risk_score']}"
+    )
+
+    print(
+        f"Confidence: "
+        f"{analysis['confidence']}"
+    )
+
+    print(
+        f"Human Review Required: "
+        f"{analysis['requires_human_review']}"
+    )
+
+    print(
+        f"Escalation: "
+        f"{analysis['recommended_escalation']}"
+    )
+
+    print(
+        f"Decision: "
+        f"{decision['recommended_action']}"
+    )
+
+    print(
+        f"Decision Reason: "
+        f"{decision['reason']}"
+    )
+
+    print(
+        f"Response Status: "
+        f"{response['status']}"
+    )
+
+    print(
+        f"Response Targets: "
+        f"{response_targets if response_targets else 'None'}"
+    )
+
     print(
         f"New Targets: "
         f"{new_targets if new_targets else 'None'}"
     )
-    print(f"Automatic: {result['automatic']}")
+
+    print(
+        f"Automatic: "
+        f"{response['automatic']}"
+    )
+
     print()
-
-
-def handle_alert(alert):
-
-    normalized_alert = normalize_alert(alert)
-
-    NORMALIZED_ALERTS.append(
-        normalized_alert
-    )
-
-    incident_count_before = len(
-        INCIDENT_CORRELATOR.incidents
-    )
-
-    incident = INCIDENT_CORRELATOR.correlate(
-        normalized_alert
-    )
-
-    is_new_incident = (
-        len(INCIDENT_CORRELATOR.incidents)
-        > incident_count_before
-    )
-
-    display_alert(alert)
-
-    display_incident(
-        incident,
-        is_new_incident
-    )
-
-    decision = decide_response(alert)
-    result = RESPONSE_AGENT.execute(decision)
-
-    display_response(result)
-
-    return result
 
 
 def process_event(event):
 
-    # Store every event
-    log_event(event)
-
-    # Display the event
     print(event)
 
-    # No rule-based alert selected initially
-    rule_alert = None
+    response_messages = (
+        AGENT_COORDINATOR.submit_event(
+            event
+        )
+    )
 
-    # Route login events to the brute-force detector
-    if event.get("event_type") == "LOGIN_ATTEMPT":
-        rule_alert = detect_brute_force(event)
+    for response_message in response_messages:
 
-    # Route HTTP events to the DDoS detector
-    elif event.get("event_type") == "HTTP_REQUEST":
-        rule_alert = detect_ddos(event)
+        display_agent_result(
+            response_message
+        )
 
-    # Route network events to the port-scan detector
-    elif event.get("event_type") == "NETWORK_CONNECTION":
-        rule_alert = detect_port_scan(event)
-
-    # Route process events to the process detector
-    elif event.get("event_type") == "PROCESS_ACTIVITY":
-        rule_alert = detect_suspicious_process(event)
-
-    # Process a rule-based alert immediately
-    if rule_alert:
-        handle_alert(rule_alert)
-
-    # Independently add the event to the AI window
-    ai_alert = AI_WINDOW_COLLECTOR.add_event(event)
-
-    # Process an alert from the completed AI window
-    if ai_alert:
-        handle_alert(ai_alert)
+    return response_messages
 
 
 def flush_ai_window():
 
-    ai_alert = AI_WINDOW_COLLECTOR.flush()
+    response_messages = (
+        AGENT_COORDINATOR.flush_ai_window()
+    )
 
-    if ai_alert:
-        return handle_alert(ai_alert)
+    for response_message in response_messages:
 
-    return None
+        display_agent_result(
+            response_message
+        )
+
+    return response_messages
