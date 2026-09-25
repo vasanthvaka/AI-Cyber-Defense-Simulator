@@ -1,0 +1,249 @@
+{
+    "configuration": {
+        "random_seed": 42,
+        "runs_per_scenario": 100,
+        "total_runs": 700
+    },
+    "overall": {
+        "attack_response_coverage": 1.0,
+        "correct_workflow_rate": 1.0,
+        "unsafe_normal_containment_rate": 0.0,
+        "latency": {
+            "sample_count": 700,
+            "average_ms": 30.426450571643986,
+            "minimum_ms": 24.308399995788932,
+            "maximum_ms": 2286.9321000762284,
+            "p95_ms": 32.59110008366406
+        }
+    },
+    "scenarios": {
+        "NORMAL_ACTIVITY": {
+            "scenario": "NORMAL_ACTIVITY",
+            "is_attack": false,
+            "total_runs": 100,
+            "runs_with_response": 2,
+            "correct_workflow_runs": 100,
+            "automatic_containment_runs": 0,
+            "approval_required_runs": 0,
+            "investigation_runs": 2,
+            "unsafe_normal_containment_runs": 0,
+            "statuses": {
+                "SIMULATED_SUCCESS": 2
+            },
+            "actions": {
+                "FLAG_FOR_INVESTIGATION": 2
+            },
+            "rates": {
+                "response_rate": 0.02,
+                "correct_workflow_rate": 1.0,
+                "automatic_containment_rate": 0.0,
+                "approval_required_rate": 0.0,
+                "investigation_rate": 0.02,
+                "unsafe_normal_containment_rate": 0.0
+            },
+            "latency": {
+                "sample_count": 100,
+                "average_ms": 48.501628008671105,
+                "minimum_ms": 24.308399995788932,
+                "maximum_ms": 2286.9321000762284,
+                "p95_ms": 29.780599987134337
+            }
+        },
+        "DISTRIBUTED_BRUTE_FORCE": {
+            "scenario": "DISTRIBUTED_BRUTE_FORCE",
+            "is_attack": true,
+            "total_runs": 100,
+            "runs_with_response": 100,
+            "correct_workflow_runs": 100,
+            "automatic_containment_runs": 9,
+            "approval_required_runs": 100,
+            "investigation_runs": 0,
+            "unsafe_normal_containment_runs": 0,
+            "statuses": {
+                "APPROVAL_REQUIRED": 100,
+                "SIMULATED_SUCCESS": 9
+            },
+            "actions": {
+                "BLOCK_IPS": 100,
+                "BLOCK_IP": 9
+            },
+            "rates": {
+                "response_rate": 1.0,
+                "correct_workflow_rate": 1.0,
+                "automatic_containment_rate": 0.09,
+                "approval_required_rate": 1.0,
+                "investigation_rate": 0.0,
+                "unsafe_normal_containment_rate": 0.0
+            },
+            "latency": {
+                "sample_count": 100,
+                "average_ms": 26.789723001420498,
+                "minimum_ms": 25.700900005176663,
+                "maximum_ms": 33.23430009186268,
+                "p95_ms": 28.16820004954934
+            }
+        },
+        "DDOS": {
+            "scenario": "DDOS",
+            "is_attack": true,
+            "total_runs": 100,
+            "runs_with_response": 100,
+            "correct_workflow_runs": 100,
+            "automatic_containment_runs": 100,
+            "approval_required_runs": 0,
+            "investigation_runs": 0,
+            "unsafe_normal_containment_runs": 0,
+            "statuses": {
+                "SIMULATED_SUCCESS": 100
+            },
+            "actions": {
+                "RATE_LIMIT_IPS": 100
+            },
+            "rates": {
+                "response_rate": 1.0,
+                "correct_workflow_rate": 1.0,
+                "automatic_containment_rate": 1.0,
+                "approval_required_rate": 0.0,
+                "investigation_rate": 0.0,
+                "unsafe_normal_containment_rate": 0.0
+            },
+            "latency": {
+                "sample_count": 100,
+                "average_ms": 27.773044996429235,
+                "minimum_ms": 26.18569997139275,
+                "maximum_ms": 42.83659998327494,
+                "p95_ms": 31.589899910613894
+            }
+        },
+        "PORT_SCAN": {
+            "scenario": "PORT_SCAN",
+            "is_attack": true,
+            "total_runs": 100,
+            "runs_with_response": 100,
+            "correct_workflow_runs": 100,
+            "automatic_containment_runs": 100,
+            "approval_required_runs": 0,
+            "investigation_runs": 0,
+            "unsafe_normal_containment_runs": 0,
+            "statuses": {
+                "SIMULATED_SUCCESS": 100
+            },
+            "actions": {
+                "BLOCK_IP": 100
+            },
+            "rates": {
+                "response_rate": 1.0,
+                "correct_workflow_rate": 1.0,
+                "automatic_containment_rate": 1.0,
+                "approval_required_rate": 0.0,
+                "investigation_rate": 0.0,
+                "unsafe_normal_containment_rate": 0.0
+            },
+            "latency": {
+                "sample_count": 100,
+                "average_ms": 29.952238001860678,
+                "minimum_ms": 25.51719988696277,
+                "maximum_ms": 48.73510007746518,
+                "p95_ms": 41.64789989590645
+            }
+        },
+        "SUSPICIOUS_PROCESS": {
+            "scenario": "SUSPICIOUS_PROCESS",
+            "is_attack": true,
+            "total_runs": 100,
+            "runs_with_response": 100,
+            "correct_workflow_runs": 100,
+            "automatic_containment_runs": 0,
+            "approval_required_runs": 100,
+            "investigation_runs": 6,
+            "unsafe_normal_containment_runs": 0,
+            "statuses": {
+                "APPROVAL_REQUIRED": 100,
+                "SIMULATED_SUCCESS": 6
+            },
+            "actions": {
+                "QUARANTINE_PROCESS": 100,
+                "FLAG_FOR_INVESTIGATION": 6
+            },
+            "rates": {
+                "response_rate": 1.0,
+                "correct_workflow_rate": 1.0,
+                "automatic_containment_rate": 0.0,
+                "approval_required_rate": 1.0,
+                "investigation_rate": 0.06,
+                "unsafe_normal_containment_rate": 0.0
+            },
+            "latency": {
+                "sample_count": 100,
+                "average_ms": 26.907993995118886,
+                "minimum_ms": 24.491700110957026,
+                "maximum_ms": 37.96619991771877,
+                "p95_ms": 32.26609993726015
+            }
+        },
+        "LOW_AND_SLOW_CREDENTIAL_ATTACK": {
+            "scenario": "LOW_AND_SLOW_CREDENTIAL_ATTACK",
+            "is_attack": true,
+            "total_runs": 100,
+            "runs_with_response": 100,
+            "correct_workflow_runs": 100,
+            "automatic_containment_runs": 0,
+            "approval_required_runs": 0,
+            "investigation_runs": 100,
+            "unsafe_normal_containment_runs": 0,
+            "statuses": {
+                "SIMULATED_SUCCESS": 100
+            },
+            "actions": {
+                "FLAG_FOR_INVESTIGATION": 100
+            },
+            "rates": {
+                "response_rate": 1.0,
+                "correct_workflow_rate": 1.0,
+                "automatic_containment_rate": 0.0,
+                "approval_required_rate": 0.0,
+                "investigation_rate": 1.0,
+                "unsafe_normal_containment_rate": 0.0
+            },
+            "latency": {
+                "sample_count": 100,
+                "average_ms": 26.320798005908728,
+                "minimum_ms": 25.021499954164028,
+                "maximum_ms": 41.069700149819255,
+                "p95_ms": 28.300999896600842
+            }
+        },
+        "DISTRIBUTED_ENDPOINT_FLOOD": {
+            "scenario": "DISTRIBUTED_ENDPOINT_FLOOD",
+            "is_attack": true,
+            "total_runs": 100,
+            "runs_with_response": 100,
+            "correct_workflow_runs": 100,
+            "automatic_containment_runs": 0,
+            "approval_required_runs": 0,
+            "investigation_runs": 100,
+            "unsafe_normal_containment_runs": 0,
+            "statuses": {
+                "SIMULATED_SUCCESS": 100
+            },
+            "actions": {
+                "FLAG_FOR_INVESTIGATION": 100
+            },
+            "rates": {
+                "response_rate": 1.0,
+                "correct_workflow_rate": 1.0,
+                "automatic_containment_rate": 0.0,
+                "approval_required_rate": 0.0,
+                "investigation_rate": 1.0,
+                "unsafe_normal_containment_rate": 0.0
+            },
+            "latency": {
+                "sample_count": 100,
+                "average_ms": 26.73972799209878,
+                "minimum_ms": 25.391000090166926,
+                "maximum_ms": 30.51379998214543,
+                "p95_ms": 28.10510015115142
+            }
+        }
+    }
+}
