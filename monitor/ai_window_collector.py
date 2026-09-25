@@ -1,18 +1,33 @@
 from detector.anomaly_detector import detect_anomaly
+
 from detector.window_builder import (
     SECONDS_PER_DAY,
     timestamp_to_seconds
 )
+
+from config.settings import get_config
 
 
 class AIWindowCollector:
 
     def __init__(
         self,
-        window_size=5,
-        minimum_flush_events=5,
+        window_size=None,
+        minimum_flush_events=None,
         anomaly_detector=detect_anomaly
     ):
+
+        ai_config = get_config()["ai_window"]
+
+        if window_size is None:
+            window_size = ai_config[
+                "window_size_seconds"
+            ]
+
+        if minimum_flush_events is None:
+            minimum_flush_events = ai_config[
+                "minimum_flush_events"
+            ]
 
         if window_size <= 0:
             raise ValueError(
@@ -25,7 +40,11 @@ class AIWindowCollector:
             )
 
         self.window_size = window_size
-        self.minimum_flush_events = minimum_flush_events
+
+        self.minimum_flush_events = (
+            minimum_flush_events
+        )
+
         self.anomaly_detector = anomaly_detector
 
         self.current_window = []

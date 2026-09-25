@@ -42,9 +42,7 @@ class MonitoringAgent(BaseAgent):
             agent_name="MONITORING_AGENT"
         )
 
-        self.alert_correlator = AlertCorrelator(
-            correlation_window=correlation_window
-        )
+        self.alert_correlator = AlertCorrelator()
 
         if ai_window_collector is None:
             ai_window_collector = (

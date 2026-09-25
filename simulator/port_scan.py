@@ -46,7 +46,14 @@ open_ports = {
 }
 
 
-def create_connection_event(source_ip, destination_port):
+def create_connection_event(
+    source_ip,
+    destination_port,
+    target_address=None
+):
+
+    if target_address is None:
+        target_address = target_ip
 
     if destination_port in open_ports:
         connection_status = "OPEN"
@@ -55,9 +62,10 @@ def create_connection_event(source_ip, destination_port):
 
     return {
         "event_type": "NETWORK_CONNECTION",
-        "timestamp": datetime.now().strftime("%H:%M:%S"),
+        "timestamp":
+            datetime.now().strftime("%H:%M:%S"),
         "source_ip": source_ip,
-        "target_ip": target_ip,
+        "target_ip": target_address,
         "destination_port": destination_port,
         "protocol": "TCP",
         "connection_status": connection_status
@@ -75,11 +83,16 @@ def generate_normal_connection():
     )
 
 
-def generate_port_scan(destination_port):
+def generate_port_scan(
+    destination_port,
+    source_ip=scanner_ip,
+    target_address=target_ip
+):
 
     return create_connection_event(
-        source_ip=scanner_ip,
-        destination_port=destination_port
+        source_ip=source_ip,
+        destination_port=destination_port,
+        target_address=target_address
     )
 
 

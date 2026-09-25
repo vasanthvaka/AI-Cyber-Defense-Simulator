@@ -2,164 +2,309 @@ import argparse
 import random
 import time
 
+from config.settings import get_config
+
 from monitor.event_monitor import (
     flush_ai_window,
     process_event
 )
 
-from simulator.brute_force import (
-    generate_normal_login,
-    generate_distributed_brute_force
+from simulator.scenario_engine import (
+    SecurityScenarioEngine
 )
 
-from simulator.ddos import (
-    generate_normal_request,
-    generate_ddos_request
+
+CONFIG = get_config()
+
+SCENARIO_ENGINE = SecurityScenarioEngine(
+    config=CONFIG
 )
 
-from simulator.port_scan import (
-    generate_normal_connection,
-    generate_port_scan,
-    scan_ports
-)
 
-from simulator.process_activity import (
-    generate_normal_process,
-    generate_suspicious_process
-)
+def process_events(events, delay_seconds):
+
+    for event in events:
+
+        process_event(event)
+
+        if delay_seconds > 0:
+            time.sleep(delay_seconds)
 
 
 def generate_mixed_normal_event():
 
-    normal_generators = [
-        generate_normal_login,
-        generate_normal_request,
-        generate_normal_connection,
-        generate_normal_process
-    ]
-
-    generator = random.choice(normal_generators)
-
-    return generator()
+    return SCENARIO_ENGINE\
+        .generate_normal_event()
 
 
-def generate_normal_activity(minimum=5, maximum=10):
+def generate_normal_activity(
+    minimum=None,
+    maximum=None
+):
 
-    event_count = random.randint(minimum, maximum)
+    normal_config = (
+        CONFIG["simulation"][
+            "normal_activity"
+        ]
+    )
 
-    for _ in range(event_count):
-        event = generate_mixed_normal_event()
+    events = (
+        SCENARIO_ENGINE
+        .generate_normal_events(
+            minimum=minimum,
+            maximum=maximum
+        )
+    )
+
+    for event in events:
+
         process_event(event)
-        time.sleep(random.uniform(0.15, 0.35))
+
+        time.sleep(
+            random.uniform(
+                normal_config[
+                    "minimum_delay_seconds"
+                ],
+                normal_config[
+                    "maximum_delay_seconds"
+                ]
+            )
+        )
 
 
 def simulate_distributed_brute_force():
 
-    for _ in range(8):
-        event = generate_distributed_brute_force()
-        process_event(event)
-        time.sleep(0.2)
+    events = (
+        SCENARIO_ENGINE
+        .generate_distributed_brute_force()
+    )
+
+    delay = (
+        SCENARIO_ENGINE.get_attack_delay(
+            "DISTRIBUTED_BRUTE_FORCE"
+        )
+    )
+
+    process_events(events, delay)
 
 
 def simulate_ddos():
 
-    for _ in range(20):
-        event = generate_ddos_request()
-        process_event(event)
-        time.sleep(0.08)
+    events = (
+        SCENARIO_ENGINE.generate_ddos()
+    )
+
+    delay = (
+        SCENARIO_ENGINE.get_attack_delay(
+            "DDOS"
+        )
+    )
+
+    process_events(events, delay)
 
 
 def simulate_port_scan():
 
-    for port in scan_ports:
-        event = generate_port_scan(port)
-        process_event(event)
-        time.sleep(0.15)
+    events = (
+        SCENARIO_ENGINE.generate_port_scan()
+    )
+
+    delay = (
+        SCENARIO_ENGINE.get_attack_delay(
+            "PORT_SCAN"
+        )
+    )
+
+    process_events(events, delay)
 
 
 def simulate_suspicious_process():
 
-    event = generate_suspicious_process()
-    process_event(event)
+    events = (
+        SCENARIO_ENGINE
+        .generate_suspicious_processes()
+    )
+
+    delay = (
+        SCENARIO_ENGINE.get_attack_delay(
+            "SUSPICIOUS_PROCESS"
+        )
+    )
+
+    process_events(events, delay)
 
 
 def run_demo():
 
-    print("\nStarting cyber-defense simulation in DEMO mode...\n")
+    print(
+        "\nStarting cyber-defense simulation "
+        "in DEMO mode...\n"
+    )
 
     generate_normal_activity(8, 8)
+
+    print(
+        "\nInjecting distributed "
+        "brute-force activity...\n"
+    )
+
     simulate_distributed_brute_force()
 
     generate_normal_activity(5, 5)
+
+    print(
+        "\nInjecting DDoS activity...\n"
+    )
+
     simulate_ddos()
 
     generate_normal_activity(5, 5)
+
+    print(
+        "\nInjecting port-scan activity...\n"
+    )
+
     simulate_port_scan()
 
     generate_normal_activity(5, 5)
+
+    print(
+        "\nInjecting suspicious-process "
+        "activity...\n"
+    )
+
     simulate_suspicious_process()
 
     generate_normal_activity(5, 5)
 
-    # Analyse the final incomplete AI window.
     flush_ai_window()
 
-    print("\nDemo simulation completed.\n")
+    print(
+        "\nDemo simulation completed.\n"
+    )
 
 
 def run_live():
 
-    print("\nStarting cyber-defense simulation in LIVE mode...")
-    print("Press Ctrl+C to stop the simulation.\n")
+    live_config = (
+        CONFIG["simulation"]["live_mode"]
+    )
 
-    attack_scenarios = [
-        simulate_distributed_brute_force,
-        simulate_ddos,
-        simulate_port_scan,
-        simulate_suspicious_process
-    ]
+    print(
+        "\nStarting cyber-defense simulation "
+        "in LIVE mode..."
+    )
+
+    print(
+        "Attacks will occur at unpredictable "
+        "times."
+    )
+
+    print(
+        "Press Ctrl+C to stop the "
+        "simulation.\n"
+    )
 
     try:
+
         while True:
 
-            # Randomize attack order during every cycle
-            random.shuffle(attack_scenarios)
+            normal_batch_count = (
+                random.randint(
+                    live_config[
+                        "minimum_normal_batches"
+                    ],
+                    live_config[
+                        "maximum_normal_batches"
+                    ]
+                )
+            )
 
-            for attack_scenario in attack_scenarios:
+            for _ in range(
+                normal_batch_count
+            ):
+                generate_normal_activity()
 
-                # Generate a random amount of normal activity
-                generate_normal_activity(6, 12)
+            attack_occurs = (
+                random.random()
+                < live_config[
+                    "attack_probability"
+                ]
+            )
 
-                # Introduce one attack without telling the detector
-                attack_scenario()
+            if not attack_occurs:
+                continue
+
+            scenario_name, events = (
+                SCENARIO_ENGINE
+                .generate_random_attack()
+            )
+
+            print(
+                "\nSimulation introduced "
+                f"{scenario_name} activity.\n"
+            )
+
+            delay = (
+                SCENARIO_ENGINE
+                .get_attack_delay(
+                    scenario_name
+                )
+            )
+
+            process_events(events, delay)
 
     except KeyboardInterrupt:
 
-        # Analyse events remaining in the final AI window.
         flush_ai_window()
 
-        print("\nLive simulation stopped by the user.\n")
+        print(
+            "\nLive simulation stopped "
+            "by the user.\n"
+        )
 
 
 def main():
 
     parser = argparse.ArgumentParser(
-        description="AI-Powered Cyber Defense Simulation"
+        description=(
+            "AI-Powered Cyber Defense "
+            "Simulation"
+        )
     )
 
     parser.add_argument(
         "--mode",
         choices=["demo", "live"],
         default="demo",
-        help="Select predictable demo mode or continuous live mode"
+        help=(
+            "Select demonstration mode "
+            "or continuous live mode"
+        )
+    )
+
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help=(
+            "Optional random seed for "
+            "reproducible simulation"
+        )
     )
 
     args = parser.parse_args()
 
+    if args.seed is not None:
+        random.seed(args.seed)
+
+    elif args.mode == "demo":
+        random.seed(42)
+
     if args.mode == "demo":
         run_demo()
 
-    elif args.mode == "live":
+    else:
         run_live()
 
 

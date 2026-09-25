@@ -1,4 +1,5 @@
 from pathlib import Path
+from config.settings import get_config
 
 import joblib
 from sklearn.ensemble import IsolationForest
@@ -25,7 +26,11 @@ MODEL_FILE = (
     / "isolation_forest.joblib"
 )
 
-WINDOW_SIZE = 5
+WINDOW_SIZE = (
+    get_config()["ai_window"][
+        "window_size_seconds"
+    ]
+)
 
 
 def train_anomaly_model():

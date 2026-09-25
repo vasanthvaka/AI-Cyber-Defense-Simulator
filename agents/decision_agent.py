@@ -280,12 +280,14 @@ class DecisionAgent(BaseAgent):
                 )
             )
 
-        targets = self._entity_values(
-            entities=incident["sources"],
-            required_entity_type=(
-                policy[
-                    "target_entity_type"
-                ]
+        targets = (
+            self._trusted_rule_source_values(
+                incident=incident,
+                required_entity_type=(
+                    policy[
+                        "target_entity_type"
+                    ]
+                )
             )
         )
 
@@ -360,6 +362,60 @@ class DecisionAgent(BaseAgent):
             ],
             "reason": reason
         }
+    @staticmethod
+    def _trusted_rule_source_values(
+        incident,
+        required_entity_type
+    ):
+
+        trusted_values = []
+
+        for alert in incident.get(
+            "alerts",
+            []
+        ):
+
+            if not isinstance(alert, dict):
+                continue
+
+            if (
+                alert.get("detection_method")
+                != "RULE_BASED"
+            ):
+                continue
+
+            if (
+                alert.get("attack_type")
+                != incident["incident_type"]
+            ):
+                continue
+
+            alert_sources = alert.get(
+                "sources",
+                []
+            )
+
+            if not isinstance(
+                alert_sources,
+                list
+            ):
+                continue
+
+            values = (
+                DecisionAgent._entity_values(
+                    entities=alert_sources,
+                    required_entity_type=(
+                        required_entity_type
+                    )
+                )
+            )
+
+            for value in values:
+
+                if value not in trusted_values:
+                    trusted_values.append(value)
+
+        return trusted_values
 
     @staticmethod
     def _entity_values(
