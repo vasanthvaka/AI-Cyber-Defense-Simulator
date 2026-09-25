@@ -17,6 +17,7 @@ class TestEventMonitor(unittest.TestCase):
 
         event = {
             "event_type": "LOGIN_ATTEMPT",
+            "timestamp": "10:30:45",
             "username": "admin",
             "source_ip": "10.0.0.50",
             "status": "FAILED"
@@ -56,8 +57,13 @@ class TestEventMonitor(unittest.TestCase):
     ):
 
         event = {
-            "event_type":
-                "NETWORK_CONNECTION"
+            "event_type": "NETWORK_CONNECTION",
+            "timestamp": "10:30:45",
+            "source_ip": "10.0.2.50",
+            "target_ip": "192.168.1.100",
+            "destination_port": 443,
+            "protocol": "TCP",
+            "connection_status": "OPEN"
         }
 
         first_response = object()
@@ -72,11 +78,15 @@ class TestEventMonitor(unittest.TestCase):
             event_monitor.AGENT_COORDINATOR,
             "submit_event",
             return_value=responses
-        ):
+        ) as submit_event:
 
             result = event_monitor.process_event(
                 event
             )
+
+        submit_event.assert_called_once_with(
+            event
+        )
 
         self.assertEqual(
             result,
@@ -100,25 +110,30 @@ class TestEventMonitor(unittest.TestCase):
     @patch(
         "monitor.event_monitor.display_agent_result"
     )
-    def test_normal_event_displays_no_result(
+    def test_unknown_event_displays_no_result(
         self,
         mock_display_agent_result,
         mock_print
     ):
 
         event = {
-            "event_type": "UNKNOWN_EVENT"
+            "event_type": "UNKNOWN_EVENT",
+            "timestamp": "10:30:45"
         }
 
         with patch.object(
             event_monitor.AGENT_COORDINATOR,
             "submit_event",
             return_value=[]
-        ):
+        ) as submit_event:
 
             result = event_monitor.process_event(
                 event
             )
+
+        submit_event.assert_called_once_with(
+            event
+        )
 
         self.assertEqual(
             result,
@@ -165,10 +180,19 @@ class TestEventMonitor(unittest.TestCase):
             2
         )
 
+        mock_display_agent_result.assert_any_call(
+            first_response
+        )
+
+        mock_display_agent_result.assert_any_call(
+            second_response
+        )
+
     def test_log_event_writes_json_line(self):
 
         event = {
             "event_type": "LOGIN_ATTEMPT",
+            "timestamp": "10:30:45",
             "username": "admin",
             "source_ip": "10.0.0.50",
             "status": "FAILED"
