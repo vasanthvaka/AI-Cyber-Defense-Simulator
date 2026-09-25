@@ -65,7 +65,11 @@ class TestIncidentDecisionAgent(
             "targets": [],
             "alerts": [
                 {
-                    "alert_id": "alert-123"
+                    "alert_id": "alert-123",
+                    "attack_type": incident_type,
+                    "detection_method":
+                        "RULE_BASED",
+                    "sources": list(sources)
                 }
             ]
         }
@@ -463,6 +467,77 @@ class TestIncidentDecisionAgent(
 
         with self.assertRaises(TypeError):
             agent.process_next()
+
+    def test_ai_sources_are_not_containment_targets(
+        self
+    ):
+
+        agent = DecisionAgent()
+
+        analysis = self.create_analysis(
+            risk_score=90,
+            confidence=1.0,
+            severity="HIGH",
+            recommended_escalation=(
+                "IMMEDIATE_RESPONSE"
+            )
+        )
+
+        incident = self.create_incident(
+            incident_type="PORT_SCAN",
+            entity_type="IP_ADDRESS",
+            entity_value="10.30.0.40"
+        )
+
+        incident["sources"].append(
+            {
+                "entity_type": "IP_ADDRESS",
+                "value": "192.168.1.20"
+            }
+        )
+
+        incident["alerts"].append(
+            {
+                "alert_id": "alert-ai",
+                "attack_type":
+                    "ANOMALOUS_BEHAVIOR",
+                "detection_method":
+                    "ISOLATION_FOREST",
+                "sources": [
+                    {
+                        "entity_type":
+                            "IP_ADDRESS",
+                        "value":
+                            "192.168.1.20"
+                    }
+                ]
+            }
+        )
+
+        message = self.create_analysis_message(
+            analysis,
+            incident
+        )
+
+        agent.receive(message)
+        reply = agent.process_next()
+
+        decision = reply.payload["decision"]
+
+        self.assertEqual(
+            decision["recommended_action"],
+            "BLOCK_IP"
+        )
+
+        self.assertEqual(
+            decision["targets"],
+            ["10.30.0.40"]
+        )
+
+        self.assertNotIn(
+            "192.168.1.20",
+            decision["targets"]
+        )
 
 
 if __name__ == "__main__":

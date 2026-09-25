@@ -1,13 +1,27 @@
 from datetime import datetime
-
+from config.settings import get_config
 
 connection_attempts = {}
 flagged_scanners = {}
 
 
-PORT_THRESHOLD = 10
-TIME_WINDOW = 5
-ALERT_COOLDOWN = 15
+PORT_SCAN_CONFIG = (
+    get_config()["detectors"]["port_scan"]
+)
+
+PORT_THRESHOLD = (
+    PORT_SCAN_CONFIG["port_threshold"]
+)
+
+TIME_WINDOW = (
+    PORT_SCAN_CONFIG["time_window_seconds"]
+)
+
+ALERT_COOLDOWN = (
+    PORT_SCAN_CONFIG[
+        "alert_cooldown_seconds"
+    ]
+)
 
 
 def detect_port_scan(event):

@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from config.settings import get_config
 
 failed_attempts_by_ip = {}
 failed_attempts_by_username = {}
@@ -8,11 +8,29 @@ flagged_ips = {}
 flagged_usernames = {}
 
 
-THRESHOLD = 5
-TIME_WINDOW = 10
-DISTRIBUTED_IP_THRESHOLD = 3
-ALERT_COOLDOWN = 15
+BRUTE_FORCE_CONFIG = (
+    get_config()["detectors"]["brute_force"]
+)
 
+THRESHOLD = (
+    BRUTE_FORCE_CONFIG["attempt_threshold"]
+)
+
+TIME_WINDOW = (
+    BRUTE_FORCE_CONFIG["time_window_seconds"]
+)
+
+DISTRIBUTED_IP_THRESHOLD = (
+    BRUTE_FORCE_CONFIG[
+        "distributed_ip_threshold"
+    ]
+)
+
+ALERT_COOLDOWN = (
+    BRUTE_FORCE_CONFIG[
+        "alert_cooldown_seconds"
+    ]
+)
 
 def detect_brute_force(event):
 

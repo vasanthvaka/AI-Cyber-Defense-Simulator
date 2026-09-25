@@ -1,0 +1,65 @@
+{
+    "detectors": {
+        "brute_force": {
+            "attempt_threshold": 5,
+            "time_window_seconds": 10,
+            "distributed_ip_threshold": 3,
+            "alert_cooldown_seconds": 15
+        },
+        "ddos": {
+            "request_threshold": 15,
+            "unique_ip_threshold": 5,
+            "time_window_seconds": 2,
+            "alert_cooldown_seconds": 10
+        },
+        "port_scan": {
+            "port_threshold": 10,
+            "time_window_seconds": 5,
+            "alert_cooldown_seconds": 15
+        },
+        "suspicious_process": {
+            "risk_threshold": 2
+        }
+    },
+    "ai_window": {
+        "window_size_seconds": 5,
+        "minimum_flush_events": 5
+    },
+    "simulation": {
+        "normal_activity": {
+            "minimum_events": 6,
+            "maximum_events": 12,
+            "minimum_delay_seconds": 0.15,
+            "maximum_delay_seconds": 0.35
+        },
+        "distributed_brute_force": {
+            "minimum_attempts": 5,
+            "maximum_attempts": 10,
+            "minimum_source_ips": 3,
+            "maximum_source_ips": 8,
+            "delay_seconds": 0.2
+        },
+        "ddos": {
+            "minimum_requests": 15,
+            "maximum_requests": 35,
+            "minimum_source_ips": 5,
+            "maximum_source_ips": 8,
+            "delay_seconds": 0.08
+        },
+        "port_scan": {
+            "minimum_ports": 10,
+            "maximum_ports": 15,
+            "delay_seconds": 0.15
+        },
+        "suspicious_process": {
+            "minimum_events": 1,
+            "maximum_events": 3,
+            "delay_seconds": 0.2
+        },
+        "live_mode": {
+            "attack_probability": 0.35,
+            "minimum_normal_batches": 1,
+            "maximum_normal_batches": 3
+        }
+    }
+}

@@ -1,15 +1,29 @@
 from datetime import datetime
-
+from config.settings import get_config
 
 requests_by_target = {}
 flagged_targets = {}
 
 
-REQUEST_THRESHOLD = 15
-UNIQUE_IP_THRESHOLD = 5
-TIME_WINDOW = 2
-ALERT_COOLDOWN = 10
+DDOS_CONFIG = (
+    get_config()["detectors"]["ddos"]
+)
 
+REQUEST_THRESHOLD = (
+    DDOS_CONFIG["request_threshold"]
+)
+
+UNIQUE_IP_THRESHOLD = (
+    DDOS_CONFIG["unique_ip_threshold"]
+)
+
+TIME_WINDOW = (
+    DDOS_CONFIG["time_window_seconds"]
+)
+
+ALERT_COOLDOWN = (
+    DDOS_CONFIG["alert_cooldown_seconds"]
+)
 
 def detect_ddos(event):
 

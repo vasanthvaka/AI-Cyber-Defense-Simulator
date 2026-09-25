@@ -1,3 +1,5 @@
+from config.settings import get_config
+
 suspicious_parent_child_pairs = {
     ("winword.exe", "powershell.exe"),
     ("winword.exe", "cmd.exe"),
@@ -21,7 +23,15 @@ suspicious_path_patterns = [
 
 flagged_processes = set()
 
-RISK_THRESHOLD = 2
+PROCESS_CONFIG = (
+    get_config()["detectors"][
+        "suspicious_process"
+    ]
+)
+
+RISK_THRESHOLD = (
+    PROCESS_CONFIG["risk_threshold"]
+)
 
 
 def detect_suspicious_process(event):

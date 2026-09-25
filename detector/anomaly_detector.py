@@ -1,4 +1,5 @@
 from pathlib import Path
+from config.settings import get_config
 
 import joblib
 
@@ -45,6 +46,25 @@ def load_anomaly_model():
             "the current feature extractor."
         )
 
+    configured_window_size = (
+        get_config()["ai_window"][
+            "window_size_seconds"
+        ]
+    )
+
+    trained_window_size = (
+        _model_package.get("window_size")
+    )
+
+    if (
+        trained_window_size
+        != configured_window_size
+    ):
+        raise ValueError(
+            "The model window size does not match "
+            "the configured AI window size. "
+            "Retrain the anomaly model."
+        )
     return _model_package
 
 
