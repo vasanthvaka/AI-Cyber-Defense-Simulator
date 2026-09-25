@@ -5,6 +5,10 @@ from agents.coordinator import AgentCoordinator
 from agents.monitoring_agent import MonitoringAgent
 from storage.database import SecurityDatabase
 
+from monitor.event_validator import (
+    EventValidationError,
+    validate_event
+)
 
 PROJECT_ROOT = Path(
     __file__
@@ -178,13 +182,38 @@ def display_agent_result(
 
 def process_event(event):
 
+    try:
+        validate_event(event)
+
+    except EventValidationError as error:
+
+        print("\n⚠ REJECTED SECURITY EVENT")
+        print(f"Reason: {error}")
+        print(f"Event: {event!r}")
+        print()
+
+        return []
+
     print(event)
 
-    response_messages = (
-        AGENT_COORDINATOR.submit_event(
-            event
+    try:
+        response_messages = (
+            AGENT_COORDINATOR.submit_event(
+                event
+            )
         )
-    )
+
+    except Exception as error:
+
+        print("\n⚠ SECURITY PIPELINE ERROR")
+        print(
+            "The event could not be processed "
+            "by the agent pipeline."
+        )
+        print(f"Reason: {error}")
+        print()
+
+        return []
 
     for response_message in response_messages:
 
@@ -197,9 +226,22 @@ def process_event(event):
 
 def flush_ai_window():
 
-    response_messages = (
-        AGENT_COORDINATOR.flush_ai_window()
-    )
+    try:
+        response_messages = (
+            AGENT_COORDINATOR.flush_ai_window()
+        )
+
+    except Exception as error:
+
+        print("\n⚠ AI WINDOW FLUSH ERROR")
+        print(
+            "The remaining AI event window "
+            "could not be processed."
+        )
+        print(f"Reason: {error}")
+        print()
+
+        return []
 
     for response_message in response_messages:
 
