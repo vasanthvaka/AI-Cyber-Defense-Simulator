@@ -1,12 +1,3 @@
-    Create:
-
-```text
-docs/demo_guide.md
-```
-
-Paste:
-
-```markdown
 # Project Demonstration Guide
 
 ## 1. Purpose
