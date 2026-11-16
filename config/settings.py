@@ -375,6 +375,20 @@ def validate_config(config):
         minimum_allowed=1
     )
 
+    if "llm" in config:
+        llm_config = _require_dictionary(
+            config,
+            "llm",
+            "config"
+        )
+        if "timeout_seconds" in llm_config:
+            _require_number(
+                llm_config,
+                "timeout_seconds",
+                "config.llm",
+                minimum=1
+            )
+
     return True
 
 

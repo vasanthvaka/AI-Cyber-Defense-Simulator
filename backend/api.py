@@ -21,6 +21,10 @@ from storage.database import (
     SecurityDatabase
 )
 
+from agents.llm_explainer import (
+    LLMExplainer
+)
+
 class NormalTrafficRequest(BaseModel):
 
     count: int = Field(
@@ -77,6 +81,10 @@ def create_app(database=None):
         SimulationController(
             database=app.state.database
         )
+    )
+
+    app.state.llm_explainer = (
+        LLMExplainer()
     )
 
     # =====================================
@@ -331,6 +339,99 @@ def create_app(database=None):
             incident_id,
             "Incident"
         )
+
+    @app.post(
+        "/api/incidents/{incident_id}/explain"
+    )
+    def explain_incident(
+        incident_id: str
+    ):
+
+        incident = app.state.database.get_record(
+            "incidents",
+            incident_id
+        )
+
+        if incident is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Incident {incident_id} was not found"
+            )
+
+        analysis = (
+            app.state.database.get_analysis_for_incident(
+                incident_id
+            )
+        )
+
+        decision = (
+            app.state.database.get_decision_for_incident(
+                incident_id
+            )
+        )
+
+        incident_data = dict(
+            incident.get("payload", incident)
+        )
+        incident_data["incident_id"] = incident["incident_id"]
+        incident_data["incident_type"] = incident["incident_type"]
+        incident_data["severity"] = incident["severity"]
+        incident_data["confidence"] = incident["confidence"]
+
+        analysis_payload = (
+            analysis.get("payload", analysis)
+            if analysis is not None
+            else None
+        )
+
+        decision_payload = (
+            decision.get("payload", decision)
+            if decision is not None
+            else None
+        )
+
+        explanation = (
+            app.state.llm_explainer.explain_incident(
+                incident=incident_data,
+                analysis=analysis_payload,
+                decision=decision_payload
+            )
+        )
+
+        if analysis is not None:
+            analysis_dict = dict(
+                analysis.get("payload", analysis)
+            )
+            analysis_dict["analysis_method"] = (
+                "LLM_ASSISTED"
+            )
+            analysis_dict["llm_enrichment"] = (
+                explanation
+            )
+            app.state.database.save_analysis(
+                analysis_dict
+            )
+
+        incident_dict = dict(
+            incident.get("payload", incident)
+        )
+        incident_dict["incident_id"] = incident["incident_id"]
+        incident_dict["incident_type"] = incident["incident_type"]
+        incident_dict["severity"] = incident["severity"]
+        incident_dict["confidence"] = incident["confidence"]
+        incident_dict["status"] = incident["status"]
+        incident_dict["created_at"] = incident["created_at"]
+        incident_dict["updated_at"] = incident["updated_at"]
+        incident_dict["llm_enrichment"] = explanation
+        app.state.database.save_incident(
+            incident_dict
+        )
+
+        return {
+            "status": "SUCCESS",
+            "incident_id": incident_id,
+            "explanation": explanation
+        }
 
     @app.get("/api/analyses")
     def get_analyses(

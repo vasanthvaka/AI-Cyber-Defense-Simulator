@@ -705,6 +705,46 @@ class SecurityDatabase:
 
         return self._decode_row(row)
 
+    def get_analysis_for_incident(self, incident_id):
+
+        with self.connect() as connection:
+
+            row = connection.execute(
+                """
+                SELECT *
+                FROM analyses
+                WHERE incident_id = ?
+                ORDER BY rowid DESC
+                LIMIT 1
+                """,
+                (incident_id,)
+            ).fetchone()
+
+        if row is None:
+            return None
+
+        return self._decode_row(row)
+
+    def get_decision_for_incident(self, incident_id):
+
+        with self.connect() as connection:
+
+            row = connection.execute(
+                """
+                SELECT *
+                FROM decisions
+                WHERE incident_id = ?
+                ORDER BY rowid DESC
+                LIMIT 1
+                """,
+                (incident_id,)
+            ).fetchone()
+
+        if row is None:
+            return None
+
+        return self._decode_row(row)
+
     def count_records(self, table_name):
 
         self._validate_table_name(

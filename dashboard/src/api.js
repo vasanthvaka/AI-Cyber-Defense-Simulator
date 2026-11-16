@@ -158,6 +158,16 @@ export async function injectRandomAttack() {
     );
 }
 
+
+export async function explainIncident(incidentId) {
+    return request(
+        `/api/incidents/${incidentId}/explain`,
+        {
+            method: "POST"
+        }
+    );
+}
+
 export {
     API_BASE_URL
 };

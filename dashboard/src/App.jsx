@@ -7,6 +7,7 @@ import {
 
 import {
     API_BASE_URL,
+    explainIncident,
     fetchDashboardData,
     generateNormalTraffic,
     injectAttack,
@@ -1287,6 +1288,34 @@ function IncidentDrawer({
     }
 
     const payload = incident.payload || {};
+    const [explanation, setExplanation] = useState(
+        incident.llm_enrichment || payload.llm_enrichment || null
+    );
+    const [explaining, setExplaining] = useState(false);
+    const [explainError, setExplainError] = useState("");
+
+    useEffect(() => {
+        setExplanation(
+            incident.llm_enrichment || incident.payload?.llm_enrichment || null
+        );
+        setExplainError("");
+        setExplaining(false);
+    }, [incident]);
+
+    const handleExplain = async () => {
+        setExplaining(true);
+        setExplainError("");
+        try {
+            const result = await explainIncident(incident.incident_id);
+            if (result && result.explanation) {
+                setExplanation(result.explanation);
+            }
+        } catch (err) {
+            setExplainError(err.message || "Failed to generate AI explanation");
+        } finally {
+            setExplaining(false);
+        }
+    };
 
     return (
         <div
@@ -1421,6 +1450,81 @@ function IncidentDrawer({
                         </dd>
                     </div>
                 </dl>
+
+                <div className="ai-explainer-section">
+                    <div className="ai-explainer-header">
+                        <div>
+                            <p className="eyebrow">AI Analysis Layer</p>
+                            <h3>SOC Incident Explanation</h3>
+                        </div>
+                        <button
+                            className="ai-explain-button"
+                            onClick={handleExplain}
+                            disabled={explaining}
+                        >
+                            {explaining ? "Analyzing with AI..." : explanation ? "Re-Analyze ✨" : "Explain with AI ✨"}
+                        </button>
+                    </div>
+
+                    {explainError && (
+                        <div className="ai-error-banner">
+                            {explainError}
+                        </div>
+                    )}
+
+                    {explaining && (
+                        <div className="ai-loading-card">
+                            <span className="spinner-icon">⚡</span>
+                            <p>Translating detection telemetry & anomaly vectors into plain English...</p>
+                        </div>
+                    )}
+
+                    {explanation && !explaining && (
+                        <div className="ai-explanation-content">
+                            <div className="ai-badge-row">
+                                <span className={`ai-source-badge ${explanation.source === "ollama" ? "ollama" : "fallback"}`}>
+                                    {explanation.source === "ollama" ? `Ollama (${explanation.model})` : `Offline Template Engine`}
+                                </span>
+                                {explanation.why_flagged?.primary_detector && (
+                                    <span className="ai-detector-badge">
+                                        {explanation.why_flagged.primary_detector}
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="ai-card">
+                                <h4>Executive Summary</h4>
+                                <p>{explanation.summary}</p>
+                            </div>
+
+                            <div className="ai-card">
+                                <h4>Why Was This Detected?</h4>
+                                <p>{explanation.why_flagged?.plain_explanation || explanation.root_cause}</p>
+                                {explanation.why_flagged?.key_signals && explanation.why_flagged.key_signals.length > 0 && (
+                                    <ul className="ai-signals-list">
+                                        {explanation.why_flagged.key_signals.map((sig, idx) => (
+                                            <li key={idx}><strong>Signal:</strong> {sig}</li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+
+                            <div className="ai-card">
+                                <h4>Why Was This Response Chosen?</h4>
+                                <p>{explanation.why_response_chosen}</p>
+                            </div>
+
+                            <div className="ai-card">
+                                <h4>Recommended Measures</h4>
+                                <ul className="ai-measures-list">
+                                    {explanation.recommended_measures?.map((measure, idx) => (
+                                        <li key={idx}>{measure}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </aside>
         </div>
     );
