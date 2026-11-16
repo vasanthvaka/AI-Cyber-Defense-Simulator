@@ -231,6 +231,16 @@ def create_app(database=None):
             app.state.simulation_controller
             .stop_live_mode()
         )
+
+    @app.get("/api/simulation/live/log")
+    def get_live_log():
+        ctrl = app.state.simulation_controller
+        return {
+            "entries": list(ctrl.live_log),
+            "is_running": ctrl.live_status.get("is_running", False),
+            "events_generated": ctrl.live_status.get("events_generated", 0),
+            "attacks_injected": ctrl.live_status.get("attacks_injected", 0)
+        }
     
     def get_records(
         table_name,
