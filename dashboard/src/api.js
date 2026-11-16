@@ -209,6 +209,10 @@ export async function stopLiveSimulation() {
     );
 }
 
+export async function fetchLiveLog() {
+    return request("/api/simulation/live/log");
+}
+
 export {
     API_BASE_URL
 };

@@ -9,6 +9,8 @@ import {
     API_BASE_URL,
     explainIncident,
     fetchDashboardData,
+    fetchLiveLog,
+    fetchSimulationStatus,
     generateNormalTraffic,
     injectAttack,
     injectRandomAttack,
@@ -202,6 +204,49 @@ function EmptyState({ message }) {
     );
 }
 
+function LiveConsoleModal({ entries = [], isRunning, onClose }) {
+    const bottomRef = useCallback(node => {
+        if (node) node.scrollIntoView({ behavior: "smooth" });
+    }, []);
+
+    const typeClass = (type) => {
+        switch (type) {
+            case "ATTACK": return "attack";
+            case "DETECTION": return "detection";
+            case "ERROR": return "error";
+            case "SYSTEM": return "system";
+            default: return "event";
+        }
+    };
+
+    return (
+        <div className="console-overlay" onClick={onClose}>
+            <div className="console-window" onClick={e => e.stopPropagation()}>
+                <div className="console-header">
+                    <span className="console-title">
+                        {isRunning
+                            ? <><span className="pulsing-dot"></span> LIVE CONSOLE</>
+                            : "LIVE CONSOLE (stopped)"}
+                    </span>
+                    <button className="console-close-btn" onClick={onClose}>✕ Close</button>
+                </div>
+                <div className="console-body">
+                    {entries.length === 0 && (
+                        <div className="console-line system">Waiting for events…</div>
+                    )}
+                    {entries.map((e, i) => (
+                        <div key={i} className={`console-line ${typeClass(e.type)}`}>
+                            <span className="console-ts">[{e.time}]</span>
+                            {" "}{e.detail}
+                        </div>
+                    ))}
+                    <div ref={bottomRef}></div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function SimulationControls({
     busy,
     message,
@@ -212,7 +257,8 @@ function SimulationControls({
     onRandomAttack,
     onRunDemo,
     onStartLive,
-    onStopLive
+    onStopLive,
+    onViewConsole
 }) {
 
     const [normalCount, setNormalCount] =
@@ -351,6 +397,13 @@ function SimulationControls({
                                         <span>Events: <strong>{liveMode.events_generated || 0}</strong></span>
                                         <span>Attacks: <strong>{liveMode.attacks_injected || 0}</strong></span>
                                     </div>
+
+                                    <button
+                                        className="simulation-button console-view-button"
+                                        onClick={() => onViewConsole && onViewConsole()}
+                                    >
+                                        📟 Console
+                                    </button>
 
                                     <button
                                         className="simulation-button stop-live-button"
@@ -504,7 +557,8 @@ function Overview({
     onRandomAttack,
     onRunDemo,
     onStartLive,
-    onStopLive
+    onStopLive,
+    onViewConsole
 }) {
 
     const severityCounts = useMemo(
@@ -560,6 +614,7 @@ function Overview({
                 onRunDemo={onRunDemo}
                 onStartLive={onStartLive}
                 onStopLive={onStopLive}
+                onViewConsole={onViewConsole}
             />
 
             <section className="stat-grid">
@@ -1727,6 +1782,9 @@ function App() {
             attacks_injected: 0
         });
 
+    const [showConsole, setShowConsole] = useState(false);
+    const [liveLog, setLiveLog] = useState([]);
+
     const loadData = useCallback(
         async (
             silent = false,
@@ -1823,6 +1881,8 @@ function App() {
                 result.live_mode
                 || { is_running: true, seed }
             );
+            setLiveLog([]);
+            setShowConsole(true);
             setSimulationMessage(result.message);
             await loadData(true);
         } catch (err) {
@@ -1857,11 +1917,44 @@ function App() {
 
     useEffect(() => {
         if (!liveMode.is_running) return;
-        const interval = setInterval(() => {
+        const interval = setInterval(async () => {
+            try {
+                const status = await fetchSimulationStatus();
+                if (status.live_mode) {
+                    setLiveMode(prev => ({
+                        ...prev,
+                        events_generated: status.live_mode.events_generated ?? prev.events_generated,
+                        attacks_injected: status.live_mode.attacks_injected ?? prev.attacks_injected,
+                        is_running: status.live_mode.is_running ?? prev.is_running,
+                    }));
+                }
+            } catch (e) { void e; }
             loadData(true);
         }, 2500);
         return () => clearInterval(interval);
     }, [liveMode.is_running, loadData]);
+
+    // Poll live log when console is open
+    useEffect(() => {
+        if (!showConsole) return;
+        const pollLog = async () => {
+            try {
+                const data = await fetchLiveLog();
+                setLiveLog(data.entries || []);
+                // Also keep stats fresh from log endpoint
+                if (liveMode.is_running) {
+                    setLiveMode(prev => ({
+                        ...prev,
+                        events_generated: data.events_generated ?? prev.events_generated,
+                        attacks_injected: data.attacks_injected ?? prev.attacks_injected,
+                    }));
+                }
+            } catch (e) { void e; }
+        };
+        pollLog();
+        const interval = setInterval(pollLog, 1500);
+        return () => clearInterval(interval);
+    }, [showConsole, liveMode.is_running]);
 
     useEffect(
         () => {
@@ -1992,6 +2085,7 @@ function App() {
                 onRunDemo={handleRunDemo}
                 onStartLive={handleStartLive}
                 onStopLive={handleStopLive}
+                onViewConsole={() => setShowConsole(true)}
             />
         );
     }
@@ -2163,6 +2257,14 @@ function App() {
                         )
                 }
             />
+
+            {showConsole && (
+                <LiveConsoleModal
+                    entries={liveLog}
+                    isRunning={liveMode.is_running}
+                    onClose={() => setShowConsole(false)}
+                />
+            )}
         </div>
     );
 }

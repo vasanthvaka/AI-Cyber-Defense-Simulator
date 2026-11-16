@@ -1,8 +1,10 @@
 
+import collections
 import json
 import random
 import threading
 import time
+from datetime import datetime
 
 from pathlib import Path
 
@@ -82,6 +84,7 @@ class SimulationController:
             "events_generated": 0,
             "attacks_injected": 0
         }
+        self.live_log = collections.deque(maxlen=300)
 
     def log_event(self, event):
 
@@ -361,6 +364,7 @@ class SimulationController:
         random.seed(actual_seed)
 
         self.live_stop_event.clear()
+        self.live_log.clear()
         self.live_status = {
             "is_running": True,
             "seed": actual_seed,
@@ -371,6 +375,13 @@ class SimulationController:
 
         def _live_loop():
             live_config = self.config["simulation"]["live_mode"]
+            ts = lambda: datetime.now().strftime("%H:%M:%S")
+
+            self.live_log.append({
+                "time": ts(), "type": "SYSTEM",
+                "detail": f"[LIVE MODE STARTED] Seed: {self.live_status['seed']}"
+            })
+
             while not self.live_stop_event.is_set():
                 try:
                     # 1. Normal events batch
@@ -384,6 +395,15 @@ class SimulationController:
                         validate_event(event)
                         self.coordinator.submit_event(event)
                         self.live_status["events_generated"] += 1
+                        self.live_log.append({
+                            "time": ts(), "type": "EVENT",
+                            "detail": (
+                                f"[EVENT] {event.get('event_type', 'UNKNOWN')}"
+                                f" | src:{event.get('source_ip', 'N/A')}"
+                                f" | dst:{event.get('destination_ip', 'N/A')}"
+                                f" | sev:{event.get('severity', 'low')}"
+                            )
+                        })
                         time.sleep(0.08)
 
                     if self.live_stop_event.is_set():
@@ -392,6 +412,10 @@ class SimulationController:
                     # 2. Random attack check
                     if random.random() < live_config.get("attack_probability", 0.35):
                         scenario_name, attack_events = self.engine.generate_random_attack()
+                        self.live_log.append({
+                            "time": ts(), "type": "ATTACK",
+                            "detail": f"[ATTACK] Injecting scenario: {scenario_name} ({len(attack_events)} events)"
+                        })
                         delay = max(self.engine.get_attack_delay(scenario_name) * 0.5, 0.04)
                         for event in attack_events:
                             if self.live_stop_event.is_set():
@@ -399,16 +423,40 @@ class SimulationController:
                             validate_event(event)
                             self.coordinator.submit_event(event)
                             self.live_status["events_generated"] += 1
+                            self.live_log.append({
+                                "time": ts(), "type": "ATTACK",
+                                "detail": (
+                                    f"[ATTACK EVENT] {event.get('event_type', 'UNKNOWN')}"
+                                    f" | src:{event.get('source_ip', 'N/A')}"
+                                    f" | sev:{event.get('severity', 'high')}"
+                                )
+                            })
                             time.sleep(delay)
                         self.live_status["attacks_injected"] += 1
+                        self.live_log.append({
+                            "time": ts(), "type": "DETECTION",
+                            "detail": f"[DETECTION] Attack scenario '{scenario_name}' submitted for analysis"
+                        })
 
                     # AI window flush
                     self.coordinator.flush_ai_window()
                     time.sleep(0.6)
 
-                except Exception:
+                except Exception as exc:
+                    self.live_log.append({
+                        "time": ts(), "type": "ERROR",
+                        "detail": f"[ERROR] {str(exc)}"
+                    })
                     time.sleep(1)
 
+            self.live_log.append({
+                "time": ts(), "type": "SYSTEM",
+                "detail": (
+                    f"[LIVE MODE STOPPED]"
+                    f" Events: {self.live_status['events_generated']}"
+                    f" | Attacks: {self.live_status['attacks_injected']}"
+                )
+            })
             try:
                 self.coordinator.flush_ai_window()
             except Exception:
