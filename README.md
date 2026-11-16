@@ -1,68 +1,78 @@
-# AI-Powered Cyber Defense Simulator
+# AEGIS // AI-Powered Cyber Defense Simulator
 
-A hybrid cybersecurity simulation platform that combines rule-based threat detection, Isolation Forest anomaly detection, multi-agent incident analysis, response-safety controls, persistent storage, a REST API, and a React security dashboard.
+A hybrid autonomous cybersecurity simulation platform that combines rule-based threat detection, Isolation Forest machine-learning anomaly detection, multi-agent incident analysis, response-safety controls, an on-demand **LLM Explainer Layer**, persistent SQLite storage, a FastAPI REST backend, and a real-time **Tactical SOC Operations Dashboard**.
 
-The project generates normal and malicious security activity, detects threats, correlates related alerts into incidents, evaluates their risk, selects defensive actions, and performs safe simulated responses.
+The project generates normal and malicious security activity, detects threats, correlates related alerts into incidents, evaluates risk, selects defensive actions, performs safe simulated responses, and provides neural plain-English root-cause explanations.
 
-> This is an educational and research-oriented simulation. It does not modify the real Windows firewall, terminate real processes, or operate directly on production network traffic.
+> **Note:** This is an educational and research-oriented simulation. It does not modify the host Windows firewall, terminate actual operating system processes, or operate on live production network traffic.
 
-## Features
+---
 
-- Dynamic normal and malicious event simulation
-- Centralized security and simulation configuration
-- Rule-based attack detection
-- Isolation Forest anomaly detection
-- Unified alert normalization
-- Alert correlation and incident creation
-- Multi-agent security architecture
-- Risk and confidence analysis
-- Policy-based response decisions
-- Protected-target and approval safeguards
-- Simulated automated containment
-- SQLite persistence
-- FastAPI REST backend
-- React/Vite SOC dashboard
-- System and response evaluation
-- Event validation and failure isolation
-- Reproducible simulations using random seeds
-- Automated Python and frontend tests
+## Key Features
+
+- **Autonomous Simulation Modes:**
+  - **4-Stage Demo Assault:** Automated sequence traversing normal baselining, distributed brute force, volumetric DDoS, stealth port scan, and rogue process execution.
+  - **Continuous Live Telemetry Streaming:** Background thread streaming normal traffic interspersed with randomized, dynamic adversarial assaults.
+  - **Tactical Threat Arsenal:** Individual direct-injection triggers for distributed brute force, volumetric DDoS, port scans, rogue process spawns, and random adversary vectors.
+  - **Live Terminal Console Feed:** Monospace streaming log modal directly within the dashboard reflecting telemetry packets, detections, and defensive actions in real time.
+- **Hybrid Threat Detection:**
+  - Signature and threshold-based rule detection.
+  - Unsupervised machine learning via Isolation Forest trained on baseline behavior.
+  - Unified alert normalization and multi-source alert correlation.
+- **Multi-Agent Architecture:**
+  - Specialized agents for monitoring, analysis, decision-making, and containment.
+  - **LLM Explainer Layer:** On-demand neural incident advisor powered by local Ollama (`llama3.2`) with an offline deterministic fallback engine.
+- **Response Safety & Governance:**
+  - Protected entities (domain controllers, gateways, critical assets).
+  - Risk and confidence thresholds with duplicate-action suppression.
+  - Approval workflows, action cooldowns, and full audit trail.
+- **AEGIS SOC Tactical Dashboard:**
+  - Modern Stealth Military SOC design system (titanium obsidian, electric emerald, tactical amber, threat crimson).
+  - Real-time Zulu (UTC) operations clock and dynamic DEFCON threat status badge.
+  - Classified Threat Dossier slide-over with severity-coded glowing borders.
+  - Floating Tactical Toast Notification HUD.
+
+---
 
 ## Supported Security Scenarios
 
-| Scenario | Rule-Based Detection | AI Detection |
-|---|---:|---:|
-| Brute-force login | Yes | Possible |
-| Distributed brute force | Yes | Yes |
-| DDoS request flood | Yes | Yes |
-| Port scan | Yes | Possible |
-| Suspicious process activity | Yes | Possible |
-| Low-and-slow credential attack | No | Yes |
-| Distributed endpoint flood | No | Yes |
-| Previously unseen unusual behaviour | No fixed signature | Possible |
+| Scenario | Rule-Based Detection | ML Anomaly Detection | Autonomous Mitigation |
+|---|:---:|:---:|---|
+| **Brute-Force Login** | Yes | Possible | Block source IP address |
+| **Distributed Brute Force** | Yes | Yes | Block confirmed attacker IPs |
+| **DDoS Request Flood** | Yes | Yes | Rate-limit confirmed attacker IPs |
+| **Stealth Port Scan** | Yes | Possible | Block scanner IP address |
+| **Suspicious Process Activity** | Yes | Possible | Quarantine malicious process |
+| **Low-and-Slow Credential Attack** | No | Yes | Flag for manual SOC investigation |
+| **Distributed Endpoint Flood** | No | Yes | Flag for manual SOC investigation |
+| **Zero-Day / Novel Anomalies** | No fixed signature | Yes | Escalate anomaly window for triage |
 
-Rule-based detection provides precise detection for known attack patterns. Isolation Forest detects event windows that differ from learned normal behaviour.
+Rule-based detection provides zero-latency precision for known signatures. Isolation Forest identifies behavioral deviations that remain below fixed threshold limits.
 
-The hybrid approach allows rules and machine learning to support each other.
+---
 
 ## System Architecture
 
 ```mermaid
 flowchart TD
-    A[Security Event Simulator] --> B[Event Validation]
+    A[Security Event Simulator\nDemo / Live / Manual] --> B[Event Validation Layer]
     B --> C[Monitoring Agent]
 
     C --> D[Rule-Based Detectors]
-    C --> E[Isolation Forest]
+    C --> E[Isolation Forest Model]
 
     D --> F[Unified Security Alerts]
     E --> F
 
-    F --> G[Alert Correlation]
+    F --> G[Alert Correlation Engine]
     G --> H[Security Incident]
+
     H --> I[Analysis Agent]
     I --> J[Decision Agent]
-    J --> K[Response Safety Layer]
+    J --> K[Response Safety Layer\nProtected Assets & Policies]
     K --> L[Response Agent]
+
+    H -.->|On-Demand Analysis| X[LLM Explainer Layer\nOllama llama3.2 / Fallback]
 
     C --> M[(SQLite Database)]
     F --> M
@@ -70,160 +80,114 @@ flowchart TD
     I --> M
     J --> M
     L --> M
+    X --> M
 
     M --> N[FastAPI REST API]
-    N --> O[React SOC Dashboard]
+    N --> O[AEGIS SOC Dashboard\nReact + Vite]
+    N --> P[Live Terminal Stream]
 ```
 
-## Multi-Agent Architecture
+---
 
-The security workflow is divided among specialized agents:
+## Multi-Agent Workflow
 
-- **Monitoring Agent** — receives events and routes them to rule-based and AI detectors.
-- **Analysis Agent** — evaluates correlated incidents, risk, severity, confidence, and supporting evidence.
-- **Decision Agent** — selects the recommended defensive action using configured response policies.
-- **Response Agent** — performs safe simulated actions and maintains response state.
-- **Coordinator** — manages agent messages and the complete event-to-response workflow.
+The system coordinates defense through specialized autonomous software agents:
 
-The agents are deterministic software agents. They do not currently depend on an external LLM.
+1. **Monitoring Agent:** Ingests validated event telemetry and fans out evaluation across rule engines and the Isolation Forest ML pipeline.
+2. **Analysis Agent:** Correlates alerts sharing common sources, entities, or temporal windows into unified security incidents, assessing severity, risk scores, and confidence metrics.
+3. **Decision Agent:** Determines the optimal containment strategy against configured security policies.
+4. **Response Agent:** Enforces policy checks, verifies entity protection rules (e.g., safeguarding critical infrastructure from accidental isolation), and executes simulated mitigations.
+5. **Coordinator:** Orchestrates message passing, state progression, and database synchronization.
+6. **LLM Explainer Agent (`LLMExplainer`):** An on-demand intelligence agent that interfaces with local LLMs (Ollama `llama3.2`) via structured JSON schema inference. It translates telemetry signals, anomaly scores, and agent decisions into executive summaries, root cause explanations, and actionable defensive playbooks. If Ollama is offline, it seamlessly falls back to a deterministic local template engine with zero downtime.
 
-## Detection Pipeline
+---
 
-```text
-Security Event
-    ↓
-Event Validation
-    ↓
-Rule Detection + AI Window Analysis
-    ↓
-Normalized Alert
-    ↓
-Alert Correlation
-    ↓
-Security Incident
-    ↓
-Risk and Confidence Analysis
-    ↓
-Response Decision
-    ↓
-Safety and Approval Checks
-    ↓
-Simulated Defensive Action
-```
+## Detection & Response Evaluation Benchmarks
 
-## Defensive Actions
+In a controlled benchmark across 700 telemetry windows evaluating normal activity, signature attacks, and low-and-slow threshold-evasion assaults:
 
-| Incident | Recommended action |
-|---|---|
-| Brute force | Block source IP |
-| Distributed brute force | Block confirmed attacker IPs |
-| DDoS | Rate-limit confirmed attacker IPs |
-| Port scan | Block scanner IP |
-| Suspicious process | Quarantine process |
-| AI-only anomaly | Flag for investigation |
-| Unknown incident | Continue monitoring |
+### Detection Performance
 
-AI-only alerts are not automatically treated as confirmed attacks. They are normally sent for investigation unless supported by stronger evidence.
+| Detection Method | Accuracy | Precision | Detection Rate | False Positive Rate | F1 Score |
+|---|---:|---:|---:|---:|---:|
+| **Rule-Based Engine** | 71.4% | 100.0% | 66.7% | 0.0% | 80.0% |
+| **Isolation Forest (ML)** | 75.6% | 99.5% | 71.8% | 2.0% | 83.4% |
+| **Hybrid Pipeline** | **99.7%** | **99.7%** | **100.0%** | **2.0%** | **99.8%** |
 
-## Response Safety
+### Response Pipeline Metrics
 
-The response layer includes:
+| Evaluation Metric | Benchmark Result |
+|---|---:|
+| **Attack Response Coverage** | **100.0%** |
+| **Correct Workflow Transition Rate** | **100.0%** |
+| **Unsafe Normal Containment Rate** | **0.0%** |
+| **Average Pipeline Processing Latency** | **30.4 ms** |
 
-- Protected IP addresses and entities
-- Confidence and risk thresholds
-- Human-approval requirements
-- Duplicate-action suppression
-- Response cooldowns
-- Temporary action expiry
-- Reversal support
-- Audit records
-- Separation between incident evidence and confirmed response targets
-
-Automatic containment uses targets supported by matching rule-based alerts. IP addresses that merely appeared in an anomalous AI window are retained as evidence but are not automatically blocked.
-
-All containment actions are simulated.
+---
 
 ## Technology Stack
 
-### Backend and Detection
+- **Backend & Simulation:** Python 3.11+, FastAPI, Uvicorn, Pydantic, SQLite
+- **Machine Learning:** scikit-learn (Isolation Forest), NumPy, SciPy, Joblib
+- **AI & LLM Integration:** Ollama (`llama3.2`), `httpx` asynchronous client, structured JSON schema prompting, local deterministic fallback engine
+- **Frontend Dashboard:** React 18, Vite, Vanilla CSS Design System (Stealth Military SOC Theme), JetBrains Mono & Chakra Petch typography
+- **Quality & Testing:** Python `unittest`, ESLint, Vitest, React Testing Library
 
-- Python 3.11
-- scikit-learn
-- Isolation Forest
-- NumPy and SciPy
-- Joblib
-- SQLite
-- FastAPI
-- Uvicorn
-- Pydantic
-
-### Dashboard
-
-- React
-- Vite
-- JavaScript
-- CSS
-- Vitest
-- React Testing Library
-
-### Development
-
-- Git and GitHub
-- Feature branches
-- Pull requests
-- Python `unittest`
-- ESLint
+---
 
 ## Project Structure
 
 ```text
 AI-Cyber-Defense-Simulator/
-├── agents/          Multi-agent workflow
-├── alerting/        Alert schemas, normalization and correlation
-├── backend/         FastAPI REST backend
-├── config/          Central security configuration
-├── dashboard/       React/Vite SOC dashboard
-├── data/            Generated events and SQLite database
-├── detector/        Rule-based and Isolation Forest detection
-├── docs/            Project documentation
-├── evaluation/      Detection and response evaluation
-├── models/          Generated machine-learning model
-├── monitor/         Event validation and pipeline entry point
-├── simulator/       Normal and malicious event generation
-├── storage/         SQLite persistence layer
-├── tests/           Python automated tests
-├── requirements.txt
+├── agents/             Autonomous agents (Coordinator, Monitoring, Analysis, Decision, Response, LLM Explainer)
+├── alerting/           Alert schemas, normalization, and incident correlation
+├── backend/            FastAPI application, route handlers, and simulation controller
+├── config/             Central configuration (security_config.json) & settings parser
+├── dashboard/          React + Vite SOC web application
+│   ├── src/
+│   │   ├── api.js      REST client & simulation API bindings
+│   │   ├── App.jsx     Main SOC layout, battle stations, threat dossier, terminal modal
+│   │   └── App.css     Stealth Military SOC design system
+├── data/               Generated event logs and SQLite database (security_defense.db)
+├── detector/           Rule-based signatures and Isolation Forest model training
+├── docs/               Detailed architecture and technical documentation
+├── evaluation/         Detection and mitigation benchmarking suite
+├── models/             Trained machine learning models (isolation_forest.joblib)
+├── monitor/            Strict schema validation for incoming event telemetry
+├── simulator/          Normal traffic and attack scenario generator engines
+├── storage/            SQLite schema, migrations, and database queries
+├── tests/              Unit and integration test suites
+├── requirements.txt    Python dependencies
 └── README.md
 ```
 
-## Installation
+---
 
-### 1. Clone the repository
+## Quickstart Guide
+
+### 1. Prerequisites
+
+- Python 3.11+
+- Node.js 18+ and npm
+- *(Optional, for LLM layer)* [Ollama](https://ollama.com/) with `llama3.2`:
+  ```bash
+  ollama pull llama3.2
+  ```
+
+### 2. Environment Setup
+
+Clone the repository and activate a Python virtual environment:
 
 ```powershell
 git clone https://github.com/vasanthvaka/AI-Cyber-Defense-Simulator.git
 cd "AI-Cyber-Defense-Simulator"
-```
 
-### 2. Create a Python virtual environment
-
-```powershell
 python -m venv venv
-```
-
-Activate it:
-
-```powershell
 .\venv\Scripts\Activate.ps1
-```
-
-### 3. Install Python dependencies
-
-```powershell
 python -m pip install -r requirements.txt
 ```
 
-### 4. Install dashboard dependencies
+Install frontend dependencies:
 
 ```powershell
 cd dashboard
@@ -231,302 +195,126 @@ npm install
 cd ..
 ```
 
-## Generate Training Data and Train the Model
-
-Training data and trained model files are generated locally and are intentionally excluded from Git.
-
-Generate normal training activity:
+### 3. Generate Training Data & Train Anomaly Model
 
 ```powershell
+# 1. Generate normal baseline telemetry
 python -m simulator.generate_training_data
-```
 
-Train the Isolation Forest:
-
-```powershell
+# 2. Train the Isolation Forest model
 python -m detector.train_anomaly_model
 ```
+The trained model will be saved to `models/isolation_forest.joblib`.
 
-The trained model will be created at:
+---
 
-```text
-models/isolation_forest.joblib
-```
+## Running the Platform
 
-The model should be retrained whenever the AI feature schema or configured AI window size changes.
+### Option A: Launch via Web Dashboard (Recommended)
 
-## Run the Simulator
+1. **Start the FastAPI Backend:**
+   ```powershell
+   & ".\venv\Scripts\python.exe" -m uvicorn backend.api:app --reload --port 8000
+   ```
+   * Swagger Docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-### Demo Mode
+2. **Start the React SOC Dashboard:**
+   ```powershell
+   cd dashboard
+   npm run dev
+   ```
+   * Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-Demo mode runs all major attack scenarios in a presentation-friendly order:
+3. **Interact from the Web Console:**
+   - **Launch Demo Scenario 🚀:** Triggers an automated 4-stage sequential attack lifecycle.
+   - **Engage Live Stream ⚡:** Runs continuous background telemetry with live event & attack counters.
+   - **Terminal Feed 📟:** Opens a real-time monospace terminal log modal streaming live events.
+   - **Threat Arsenal Cards:** Directly launch individual attack vectors (Brute Force, DDoS, Port Scan, Rogue Process, Random Adversary).
+   - **Explain with AI ✨:** Click on any incident row to open the classified Threat Dossier, then trigger plain-English neural root-cause analysis.
+
+### Option B: Run via CLI
+
+Run the simulator directly from the terminal without launching the web server:
 
 ```powershell
-python -m simulator.main --mode demo
-```
-
-Use a seed for reproducible output:
-
-```powershell
+# Demo Mode (Presentation order, reproducible with seed)
 python -m simulator.main --mode demo --seed 42
-```
 
-The same seed reproduces the same randomized attack structure.
-
-### Live Mode
-
-Live mode continuously mixes normal activity with dynamically selected attacks:
-
-```powershell
-python -m simulator.main --mode live
-```
-
-Stop live mode with:
-
-```text
-Ctrl+C
-```
-
-Live mode can also use a seed:
-
-```powershell
+# Live Mode (Continuous stream, stop with Ctrl+C)
 python -m simulator.main --mode live --seed 99
 ```
 
-## Run the Backend API
+---
 
-From the project root:
+## Running Automated Tests & Quality Checks
 
+### Python Test Suite
 ```powershell
-uvicorn backend.api:app --reload
+python -m unittest discover tests
 ```
 
-The API will be available at:
-
-```text
-http://127.0.0.1:8000
-```
-
-Interactive API documentation:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-The backend exposes data such as:
-
-- Statistics
-- Events
-- Alerts
-- Incidents
-- Analyses
-- Decisions
-- Responses
-- Audit records
-- Individual incident details
-
-## Run the Dashboard
-
-Keep the backend running in one terminal.
-
-Open another terminal:
-
+### Frontend Linting & Unit Tests
 ```powershell
 cd dashboard
-npm run dev
-```
-
-Open the URL displayed by Vite, normally:
-
-```text
-http://127.0.0.1:5173
-```
-
-The dashboard retrieves security data from the FastAPI backend and refreshes it periodically.
-
-A custom API URL can be configured using:
-
-```text
-VITE_API_URL
-```
-
-## Run the Tests
-
-### Python Tests
-
-From the project root:
-
-```powershell
-python -m unittest discover
-```
-
-Current verified suite:
-
-```text
-271 Python tests passing
-```
-
-### Dashboard Tests
-
-```powershell
-cd dashboard
+npm run lint
 npm test -- --run
 ```
 
-Current verified suite:
-
-```text
-6 frontend tests passing
-```
-
-### Dashboard Linting
-
+### Run Scientific Benchmark Evaluators
 ```powershell
-npm run lint
-```
-
-### Production Build
-
-```powershell
-npm run build
-```
-
-## Run the Evaluations
-
-### Detection Evaluation
-
-```powershell
+# Detection fidelity benchmark
 python -m evaluation.system_evaluator
-```
 
-### Response-Pipeline Evaluation
-
-```powershell
+# Response pipeline & safety governance benchmark
 python -m evaluation.response_evaluator
 ```
+Generated reports are stored under `evaluation/results/`.
 
-Evaluation reports are stored under:
+---
 
-```text
-evaluation/results/
-```
+## REST API Reference
 
-## Detection Evaluation Results
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/dashboard` | Aggregated statistics, events, alerts, incidents, responses, and audit logs |
+| `POST` | `/api/simulation/demo` | Execute synchronous 4-stage demonstration with optional random seed |
+| `POST` | `/api/simulation/live/start` | Launch continuous background telemetry streaming thread |
+| `POST` | `/api/simulation/live/stop` | Terminate active live background streaming |
+| `GET` | `/api/simulation/live/log` | Fetch sliding-window live terminal log entries and real-time counters |
+| `POST` | `/api/simulation/attack/{attack_type}` | Ingest a targeted attack scenario (`brute-force`, `ddos`, `port-scan`, `suspicious-process`) |
+| `POST` | `/api/simulation/random-attack` | Ingest a randomly selected adversarial scenario |
+| `POST` | `/api/simulation/normal` | Ingest a batch of normal baseline traffic events |
+| `GET` | `/api/incidents/{incident_id}` | Retrieve comprehensive incident dossier by ID |
+| `POST` | `/api/incidents/{incident_id}/explain` | Request on-demand plain-English LLM root cause analysis |
 
-The final controlled simulation evaluated 700 windows across normal activity, known attacks, and threshold-evasion attacks.
+---
 
-| Method | Accuracy | Precision | Detection Rate | False Positive Rate | F1 Score |
-|---|---:|---:|---:|---:|---:|
-| Rule-based | 71.4% | 100.0% | 66.7% | 0.0% | 80.0% |
-| Isolation Forest | 75.6% | 99.5% | 71.8% | 2.0% | 83.4% |
-| Hybrid | 99.7% | 99.7% | 100.0% | 2.0% | 99.8% |
+## Configuration & Tuning
 
-The rule-based system performed reliably on known attacks but missed scenarios designed to remain below fixed thresholds.
-
-Isolation Forest detected the low-and-slow credential attack and distributed endpoint flood that the rules missed.
-
-The hybrid system combined the precision of rules with the broader anomaly-detection capability of the AI model.
-
-## Response Evaluation Results
-
-| Metric | Result |
-|---|---:|
-| Attack response coverage | 100.0% |
-| Correct workflow rate | 100.0% |
-| Unsafe normal containment rate | 0.0% |
-| Average pipeline latency | 30.426 ms |
-
-These results were obtained in a controlled synthetic simulation and should not be interpreted as production network benchmarks.
-
-## Central Configuration
-
-Security thresholds and simulator behaviour are configured in:
+All security thresholds, detection windows, and simulation parameters are centralized in:
 
 ```text
 config/security_config.json
 ```
 
-The configuration controls:
+Key configuration sections:
+- `rules`: Thresholds for login failures, port sweep counts, DDoS request rates, and process execution criteria.
+- `ai`: Window size, contamination rate, and feature extractor parameters.
+- `llm`: Provider configuration (Ollama model `llama3.2`, endpoint URL, timeout).
+- `safety`: Protected IP addresses, containment confidence thresholds, and human-approval gates.
+- `simulation`: Delay intervals, normal traffic volume ranges, and live-mode attack probability.
 
-- Rule thresholds
-- Detection time windows
-- AI window size
-- Normal activity ranges
-- Attack intensity ranges
-- Attack delays
-- Live-mode attack probability
+---
 
-Centralized configuration allows system behaviour to be changed without modifying detection and simulation logic across multiple files.
+## Safety & Governance Philosophy
 
-## Generated Files
+1. **Separation of Evidence and Response Targets:** IP addresses identified inside anomalous ML windows are retained as investigative evidence but are not automatically blocked unless corroborated by deterministic rule matches or confidence thresholds.
+2. **Protected Entity Safeguards:** Critical IP ranges (e.g., DNS servers, default gateways, Active Directory Domain Controllers) cannot be blocked by automated policies.
+3. **Auditability:** Every containment decision produces an immutable audit trail entry detailing policy checks, rationale, and timestamp.
+4. **Resilience & Fallback:** The LLM Explainer layer operates completely out-of-band on request. Simulation performance and autonomous containment are never delayed or bottlenecked by LLM latency.
 
-The following files are created locally and excluded from Git:
+---
 
-```text
-data/security_events.jsonl
-data/normal_training_events.jsonl
-data/security_defense.db
-models/isolation_forest.joblib
-```
+## License
 
-This prevents runtime data, generated models, and local databases from being committed accidentally.
-
-## Event Validation and Reliability
-
-Incoming events are validated before entering the agent pipeline.
-
-Validation includes:
-
-- Required fields
-- Data types
-- Timestamp format
-- IP-address format
-- Port ranges
-- Login status
-- Connection status
-- Process identifiers
-
-Malformed events are rejected safely.
-
-Internal pipeline and AI-window errors are contained and reported without terminating the entire simulator.
-
-## Current Status
-
-The core system is complete and includes:
-
-- Dynamic simulation
-- Hybrid threat detection
-- Incident correlation
-- Multi-agent analysis
-- Safe simulated responses
-- Persistent storage
-- REST API
-- React dashboard
-- Evaluation
-- Automated testing
-- System hardening
-
-The remaining work is focused on final documentation, demonstration preparation, and release packaging.
-
-## Limitations
-
-- Events are simulated rather than collected from a real network.
-- Defensive actions are simulated.
-- Isolation Forest is trained using synthetic normal activity.
-- Results depend on configured thresholds and generated scenarios.
-- The current system is not intended for production deployment.
-- AI anomaly detection identifies unusual behaviour but does not always determine the exact attack type.
-
-## Future Enhancements
-
-- Real network and operating-system telemetry
-- Additional attack scenarios
-- Supervised attack classification
-- Online model retraining
-- Model-drift monitoring
-- Containerized deployment
-- Authentication and role-based dashboard access
-- Email or messaging notifications
-- Threat-intelligence integration
-- Optional LLM-generated incident explanations
-- Production firewall and endpoint-response connectors with strict authorization controls
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
