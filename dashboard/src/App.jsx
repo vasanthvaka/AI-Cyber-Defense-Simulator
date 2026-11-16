@@ -11,7 +11,10 @@ import {
     fetchDashboardData,
     generateNormalTraffic,
     injectAttack,
-    injectRandomAttack
+    injectRandomAttack,
+    runDemoSimulation,
+    startLiveSimulation,
+    stopLiveSimulation
 } from "./api";
 
 import "./App.css";
@@ -203,13 +206,23 @@ function SimulationControls({
     busy,
     message,
     error,
+    liveMode = {},
     onNormalTraffic,
     onAttack,
-    onRandomAttack
+    onRandomAttack,
+    onRunDemo,
+    onStartLive,
+    onStopLive
 }) {
 
     const [normalCount, setNormalCount] =
         useState(10);
+    const [demoSeed, setDemoSeed] =
+        useState(42);
+    const [liveSeed, setLiveSeed] =
+        useState(42);
+
+    const isLive = Boolean(liveMode?.is_running);
 
     return (
         <section className="panel simulation-panel">
@@ -224,13 +237,132 @@ function SimulationControls({
                     </h2>
                 </div>
 
-                <span className={
-                    busy
-                        ? "simulation-status running"
-                        : "simulation-status idle"
-                }>
-                    {busy ? "Running" : "Idle"}
-                </span>
+                <div className="status-indicators">
+                    {isLive && (
+                        <span className="live-status-pill pulsing">
+                            <span className="pulsing-dot"></span> LIVE MODE ACTIVE (Seed: {liveMode.seed})
+                        </span>
+                    )}
+                    <span className={
+                        (busy || isLive)
+                            ? "simulation-status running"
+                            : "simulation-status idle"
+                    }>
+                        {isLive ? "Live Streaming" : busy ? "Running" : "Idle"}
+                    </span>
+                </div>
+            </div>
+
+            {/* AUTONOMOUS MODES (DEMO & LIVE) */}
+            <div className="simulation-section autonomous-section">
+                <div className="section-title-wrap">
+                    <h3>Autonomous Simulation Modes</h3>
+                    <p>
+                        Run end-to-end demonstrations or continuous background streaming directly from the SOC console.
+                    </p>
+                </div>
+
+                <div className="simulation-mode-cards">
+                    {/* DEMO MODE CARD */}
+                    <div className="mode-card demo-card">
+                        <div className="mode-card-header">
+                            <span className="mode-icon">🚀</span>
+                            <div>
+                                <strong>Demo Mode</strong>
+                                <span className="mode-subtitle">Automated 4-Stage Attack Lifecycle</span>
+                            </div>
+                        </div>
+
+                        <p className="mode-desc">
+                            Sequentially executes normal baselining, Distributed Brute Force, DDoS flood, Port Scan, and Suspicious Process execution with AI window evaluation.
+                        </p>
+
+                        <div className="mode-controls">
+                            <div className="seed-input-wrapper">
+                                <label htmlFor="demo-seed">Seed:</label>
+                                <input
+                                    id="demo-seed"
+                                    type="number"
+                                    value={demoSeed}
+                                    onChange={e => setDemoSeed(Number(e.target.value) || 42)}
+                                    disabled={busy || isLive}
+                                />
+                            </div>
+
+                            <button
+                                className="simulation-button demo-button"
+                                onClick={() => onRunDemo && onRunDemo(demoSeed)}
+                                disabled={busy || isLive}
+                            >
+                                Run Demo Mode 🚀
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* LIVE STREAMING MODE CARD */}
+                    <div className={`mode-card live-card ${isLive ? "active-live" : ""}`}>
+                        <div className="mode-card-header">
+                            <span className="mode-icon">⚡</span>
+                            <div>
+                                <strong>Live Streaming Mode</strong>
+                                <span className="mode-subtitle">Real-Time Continuous Telemetry</span>
+                            </div>
+                        </div>
+
+                        <p className="mode-desc">
+                            Continuously streams normal traffic interspersed with unpredictable attacks at randomized intervals. Perfect for live SOC monitoring.
+                        </p>
+
+                        <div className="mode-controls">
+                            {!isLive ? (
+                                <>
+                                    <div className="seed-input-wrapper">
+                                        <label htmlFor="live-seed">Seed:</label>
+                                        <input
+                                            id="live-seed"
+                                            type="number"
+                                            value={liveSeed}
+                                            onChange={e => setLiveSeed(Number(e.target.value) || 42)}
+                                            disabled={busy}
+                                        />
+                                    </div>
+
+                                    <div className="live-actions">
+                                        <button
+                                            className="simulation-button live-button"
+                                            onClick={() => onStartLive && onStartLive(liveSeed, false)}
+                                            disabled={busy}
+                                        >
+                                            Start Live Mode 🟢
+                                        </button>
+
+                                        <button
+                                            className="simulation-button random-seed-button"
+                                            onClick={() => onStartLive && onStartLive(null, true)}
+                                            disabled={busy}
+                                        >
+                                            Random Seed Mode 🎲
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="live-running-bar">
+                                    <div className="live-metric-pill">
+                                        <span>Events: <strong>{liveMode.events_generated || 0}</strong></span>
+                                        <span>Attacks: <strong>{liveMode.attacks_injected || 0}</strong></span>
+                                    </div>
+
+                                    <button
+                                        className="simulation-button stop-live-button"
+                                        onClick={() => onStopLive && onStopLive()}
+                                    >
+                                        Stop Live Mode ⏹️
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div className="simulation-section">
@@ -265,7 +397,7 @@ function SimulationControls({
                                 )
                             );
                         }}
-                        disabled={busy}
+                        disabled={busy || isLive}
                     />
 
                     <button
@@ -273,7 +405,7 @@ function SimulationControls({
                         onClick={() =>
                             onNormalTraffic(normalCount)
                         }
-                        disabled={busy}
+                        disabled={busy || isLive}
                     >
                         Generate normal traffic
                     </button>
@@ -281,7 +413,7 @@ function SimulationControls({
             </div>
 
             <div className="simulation-section">
-                <h3>Attack simulation</h3>
+                <h3>Individual Attack simulation</h3>
 
                 <p>
                     Select an individual attack scenario or
@@ -294,7 +426,7 @@ function SimulationControls({
                         onClick={() =>
                             onAttack("brute-force")
                         }
-                        disabled={busy}
+                        disabled={busy || isLive}
                     >
                         Brute force
                     </button>
@@ -304,7 +436,7 @@ function SimulationControls({
                         onClick={() =>
                             onAttack("ddos")
                         }
-                        disabled={busy}
+                        disabled={busy || isLive}
                     >
                         DDoS
                     </button>
@@ -314,7 +446,7 @@ function SimulationControls({
                         onClick={() =>
                             onAttack("port-scan")
                         }
-                        disabled={busy}
+                        disabled={busy || isLive}
                     >
                         Port scan
                     </button>
@@ -324,7 +456,7 @@ function SimulationControls({
                         onClick={() =>
                             onAttack("suspicious-process")
                         }
-                        disabled={busy}
+                        disabled={busy || isLive}
                     >
                         Suspicious process
                     </button>
@@ -332,7 +464,7 @@ function SimulationControls({
                     <button
                         className="simulation-button random-button"
                         onClick={onRandomAttack}
-                        disabled={busy}
+                        disabled={busy || isLive}
                     >
                         Random attack
                     </button>
@@ -366,9 +498,13 @@ function Overview({
     simulationBusy,
     simulationMessage,
     simulationError,
+    liveMode,
     onNormalTraffic,
     onAttack,
-    onRandomAttack
+    onRandomAttack,
+    onRunDemo,
+    onStartLive,
+    onStopLive
 }) {
 
     const severityCounts = useMemo(
@@ -417,9 +553,13 @@ function Overview({
                 busy={simulationBusy}
                 message={simulationMessage}
                 error={simulationError}
+                liveMode={liveMode}
                 onNormalTraffic={onNormalTraffic}
                 onAttack={onAttack}
                 onRandomAttack={onRandomAttack}
+                onRunDemo={onRunDemo}
+                onStartLive={onStartLive}
+                onStopLive={onStopLive}
             />
 
             <section className="stat-grid">
@@ -1283,32 +1423,33 @@ function IncidentDrawer({
     onClose
 }) {
 
-    if (!incident) {
-        return null;
-    }
-
-    const payload = incident.payload || {};
-    const [explanation, setExplanation] = useState(
-        incident.llm_enrichment || payload.llm_enrichment || null
-    );
+    const payload = incident?.payload || {};
+    const [customExplanation, setCustomExplanation] = useState(null);
+    const [lastIncidentId, setLastIncidentId] = useState(incident?.incident_id);
     const [explaining, setExplaining] = useState(false);
     const [explainError, setExplainError] = useState("");
 
-    useEffect(() => {
-        setExplanation(
-            incident.llm_enrichment || incident.payload?.llm_enrichment || null
-        );
+    if (incident && incident.incident_id !== lastIncidentId) {
+        setLastIncidentId(incident.incident_id);
+        setCustomExplanation(null);
         setExplainError("");
         setExplaining(false);
-    }, [incident]);
+    }
+
+    const explanation =
+        customExplanation
+        || incident?.llm_enrichment
+        || payload.llm_enrichment
+        || null;
 
     const handleExplain = async () => {
+        if (!incident) return;
         setExplaining(true);
         setExplainError("");
         try {
             const result = await explainIncident(incident.incident_id);
             if (result && result.explanation) {
-                setExplanation(result.explanation);
+                setCustomExplanation(result.explanation);
             }
         } catch (err) {
             setExplainError(err.message || "Failed to generate AI explanation");
@@ -1316,6 +1457,10 @@ function IncidentDrawer({
             setExplaining(false);
         }
     };
+
+    if (!incident) {
+        return null;
+    }
 
     return (
         <div
@@ -1574,6 +1719,14 @@ function App() {
     const [simulationError, setSimulationError] =
         useState("");
 
+    const [liveMode, setLiveMode] =
+        useState({
+            is_running: false,
+            seed: null,
+            events_generated: 0,
+            attacks_injected: 0
+        });
+
     const loadData = useCallback(
         async (
             silent = false,
@@ -1655,6 +1808,60 @@ function App() {
             setSimulationBusy(false);
         }
     };
+
+    const handleRunDemo = async (seed = 42) => {
+        await runSimulation(runDemoSimulation, seed);
+    };
+
+    const handleStartLive = async (seed = null, useRandomSeed = false) => {
+        setSimulationBusy(true);
+        setSimulationMessage("");
+        setSimulationError("");
+        try {
+            const result = await startLiveSimulation(seed, useRandomSeed);
+            setLiveMode(
+                result.live_mode
+                || { is_running: true, seed }
+            );
+            setSimulationMessage(result.message);
+            await loadData(true);
+        } catch (err) {
+            setSimulationError(
+                err.message || "Failed to start live simulation"
+            );
+        } finally {
+            setSimulationBusy(false);
+        }
+    };
+
+    const handleStopLive = async () => {
+        setSimulationBusy(true);
+        try {
+            const result = await stopLiveSimulation();
+            setLiveMode({
+                is_running: false,
+                seed: null,
+                events_generated: 0,
+                attacks_injected: 0
+            });
+            setSimulationMessage(result.message);
+            await loadData(true);
+        } catch (err) {
+            setSimulationError(
+                err.message || "Failed to stop live simulation"
+            );
+        } finally {
+            setSimulationBusy(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!liveMode.is_running) return;
+        const interval = setInterval(() => {
+            loadData(true);
+        }, 2500);
+        return () => clearInterval(interval);
+    }, [liveMode.is_running, loadData]);
 
     useEffect(
         () => {
@@ -1764,6 +1971,7 @@ function App() {
                 simulationBusy={simulationBusy}
                 simulationMessage={simulationMessage}
                 simulationError={simulationError}
+                liveMode={liveMode}
                 onNormalTraffic={count =>
                     runSimulation(
                         generateNormalTraffic,
@@ -1781,6 +1989,9 @@ function App() {
                         injectRandomAttack
                     )
                 }
+                onRunDemo={handleRunDemo}
+                onStartLive={handleStartLive}
+                onStopLive={handleStopLive}
             />
         );
     }

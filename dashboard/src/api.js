@@ -168,6 +168,47 @@ export async function explainIncident(incidentId) {
     );
 }
 
+
+export async function runDemoSimulation(seed = 42) {
+    return request(
+        "/api/simulation/demo",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ seed })
+        }
+    );
+}
+
+
+export async function startLiveSimulation(seed = null, useRandomSeed = false) {
+    return request(
+        "/api/simulation/live/start",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                seed: seed ? Number(seed) : null,
+                use_random_seed: useRandomSeed
+            })
+        }
+    );
+}
+
+
+export async function stopLiveSimulation() {
+    return request(
+        "/api/simulation/live/stop",
+        {
+            method: "POST"
+        }
+    );
+}
+
 export {
     API_BASE_URL
 };

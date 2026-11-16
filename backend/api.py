@@ -33,6 +33,17 @@ class NormalTrafficRequest(BaseModel):
         le=100
     )
 
+
+class DemoSimulationRequest(BaseModel):
+
+    seed: int | None = Field(default=42)
+
+
+class LiveSimulationRequest(BaseModel):
+
+    seed: int | None = Field(default=None)
+    use_random_seed: bool = Field(default=False)
+
 PROJECT_ROOT = Path(
     __file__
 ).resolve().parent.parent
@@ -168,6 +179,58 @@ def create_app(database=None):
                 status_code=409,
                 detail=str(error)
             )
+
+    @app.post("/api/simulation/demo")
+    def run_demo_simulation(
+        request: DemoSimulationRequest = None
+    ):
+
+        seed = request.seed if request is not None else 42
+
+        try:
+
+            return (
+                app.state.simulation_controller
+                .run_demo(seed=seed)
+            )
+
+        except SimulationBusyError as error:
+
+            raise HTTPException(
+                status_code=409,
+                detail=str(error)
+            )
+
+    @app.post("/api/simulation/live/start")
+    def start_live_simulation(
+        request: LiveSimulationRequest = None
+    ):
+
+        seed = None
+        if request is not None and not request.use_random_seed:
+            seed = request.seed
+
+        try:
+
+            return (
+                app.state.simulation_controller
+                .start_live_mode(seed=seed)
+            )
+
+        except SimulationBusyError as error:
+
+            raise HTTPException(
+                status_code=409,
+                detail=str(error)
+            )
+
+    @app.post("/api/simulation/live/stop")
+    def stop_live_simulation():
+
+        return (
+            app.state.simulation_controller
+            .stop_live_mode()
+        )
     
     def get_records(
         table_name,
