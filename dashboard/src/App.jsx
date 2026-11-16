@@ -7,7 +7,10 @@ import {
 
 import {
     API_BASE_URL,
-    fetchDashboardData
+    fetchDashboardData,
+    generateNormalTraffic,
+    injectAttack,
+    injectRandomAttack
 } from "./api";
 
 import "./App.css";
@@ -195,10 +198,176 @@ function EmptyState({ message }) {
     );
 }
 
+function SimulationControls({
+    busy,
+    message,
+    error,
+    onNormalTraffic,
+    onAttack,
+    onRandomAttack
+}) {
+
+    const [normalCount, setNormalCount] =
+        useState(10);
+
+    return (
+        <section className="panel simulation-panel">
+            <div className="panel-heading">
+                <div>
+                    <p className="eyebrow">
+                        Simulation Environment
+                    </p>
+
+                    <h2>
+                        Simulation Control Center
+                    </h2>
+                </div>
+
+                <span className={
+                    busy
+                        ? "simulation-status running"
+                        : "simulation-status idle"
+                }>
+                    {busy ? "Running" : "Idle"}
+                </span>
+            </div>
+
+            <div className="simulation-section">
+                <h3>Normal traffic</h3>
+
+                <p>
+                    Generate a batch of normal system activity
+                    to test how the detection pipeline handles
+                    legitimate events.
+                </p>
+
+                <div className="simulation-normal-controls">
+                    <label htmlFor="normal-count">
+                        Number of events
+                    </label>
+
+                    <input
+                        id="normal-count"
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={normalCount}
+                        onChange={event => {
+                            const value = Number(
+                                event.target.value
+                            );
+
+                            setNormalCount(
+                                Math.min(
+                                    100,
+                                    Math.max(1, value || 1)
+                                )
+                            );
+                        }}
+                        disabled={busy}
+                    />
+
+                    <button
+                        className="simulation-button normal-button"
+                        onClick={() =>
+                            onNormalTraffic(normalCount)
+                        }
+                        disabled={busy}
+                    >
+                        Generate normal traffic
+                    </button>
+                </div>
+            </div>
+
+            <div className="simulation-section">
+                <h3>Attack simulation</h3>
+
+                <p>
+                    Select an individual attack scenario or
+                    let the simulator choose one randomly.
+                </p>
+
+                <div className="simulation-actions">
+                    <button
+                        className="simulation-button attack-button"
+                        onClick={() =>
+                            onAttack("brute-force")
+                        }
+                        disabled={busy}
+                    >
+                        Brute force
+                    </button>
+
+                    <button
+                        className="simulation-button attack-button"
+                        onClick={() =>
+                            onAttack("ddos")
+                        }
+                        disabled={busy}
+                    >
+                        DDoS
+                    </button>
+
+                    <button
+                        className="simulation-button attack-button"
+                        onClick={() =>
+                            onAttack("port-scan")
+                        }
+                        disabled={busy}
+                    >
+                        Port scan
+                    </button>
+
+                    <button
+                        className="simulation-button attack-button"
+                        onClick={() =>
+                            onAttack("suspicious-process")
+                        }
+                        disabled={busy}
+                    >
+                        Suspicious process
+                    </button>
+
+                    <button
+                        className="simulation-button random-button"
+                        onClick={onRandomAttack}
+                        disabled={busy}
+                    >
+                        Random attack
+                    </button>
+                </div>
+            </div>
+
+            {busy && (
+                <p className="simulation-feedback">
+                    Simulation is being processed. Please wait...
+                </p>
+            )}
+
+            {message && (
+                <div className="simulation-result success">
+                    {message}
+                </div>
+            )}
+
+            {error && (
+                <div className="simulation-result failure">
+                    {error}
+                </div>
+            )}
+        </section>
+    );
+}
 
 function Overview({
     data,
-    onSelectIncident
+    onSelectIncident,
+    simulationBusy,
+    simulationMessage,
+    simulationError,
+    onNormalTraffic,
+    onAttack,
+    onRandomAttack
 }) {
 
     const severityCounts = useMemo(
@@ -243,6 +412,15 @@ function Overview({
 
     return (
         <>
+            <SimulationControls
+                busy={simulationBusy}
+                message={simulationMessage}
+                error={simulationError}
+                onNormalTraffic={onNormalTraffic}
+                onAttack={onAttack}
+                onRandomAttack={onRandomAttack}
+            />
+
             <section className="stat-grid">
                 <StatCard
                     label="Security Events"
@@ -1283,6 +1461,15 @@ function App() {
         setSeverityFilter
     ] = useState("ALL");
 
+    const [simulationBusy, setSimulationBusy] =
+        useState(false);
+
+    const [simulationMessage, setSimulationMessage] =
+        useState("");
+
+    const [simulationError, setSimulationError] =
+        useState("");
+
     const loadData = useCallback(
         async (
             silent = false,
@@ -1325,6 +1512,45 @@ function App() {
         },
         []
     );
+
+    const runSimulation = async (
+        simulationFunction,
+        ...args
+    ) => {
+
+        if (simulationBusy) {
+            return;
+        }
+
+        setSimulationBusy(true);
+        setSimulationMessage("");
+        setSimulationError("");
+
+        try {
+
+            const result = await simulationFunction(
+                ...args
+            );
+
+            setSimulationMessage(
+                `${result.operation}: `
+                + `${result.events_generated} events generated. `
+                + `${result.message}`
+            );
+
+            await loadData(true);
+
+        } catch (requestError) {
+
+            setSimulationError(
+                requestError.message
+            );
+
+        } finally {
+
+            setSimulationBusy(false);
+        }
+    };
 
     useEffect(
         () => {
@@ -1430,8 +1656,26 @@ function App() {
         return (
             <Overview
                 data={data}
-                onSelectIncident={
-                    setSelectedIncident
+                onSelectIncident={setSelectedIncident}
+                simulationBusy={simulationBusy}
+                simulationMessage={simulationMessage}
+                simulationError={simulationError}
+                onNormalTraffic={count =>
+                    runSimulation(
+                        generateNormalTraffic,
+                        count
+                    )
+                }
+                onAttack={attackType =>
+                    runSimulation(
+                        injectAttack,
+                        attackType
+                    )
+                }
+                onRandomAttack={() =>
+                    runSimulation(
+                        injectRandomAttack
+                    )
                 }
             />
         );

@@ -117,6 +117,46 @@ export async function fetchIncident(
     );
 }
 
+export async function fetchSimulationStatus(signal) {
+    return request(
+        "/api/simulation/status",
+        { signal }
+    );
+}
+
+
+export async function generateNormalTraffic(count = 10) {
+    return request(
+        "/api/simulation/normal",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ count })
+        }
+    );
+}
+
+
+export async function injectAttack(attackType) {
+    return request(
+        `/api/simulation/attacks/${attackType}`,
+        {
+            method: "POST"
+        }
+    );
+}
+
+
+export async function injectRandomAttack() {
+    return request(
+        "/api/simulation/attacks/random",
+        {
+            method: "POST"
+        }
+    );
+}
 
 export {
     API_BASE_URL

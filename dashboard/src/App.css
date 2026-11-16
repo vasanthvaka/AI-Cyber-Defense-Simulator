@@ -1198,3 +1198,163 @@ tbody tr[onclick] {
         flex-direction: column;
     }
 }
+
+/* =====================================
+   SIMULATION CONTROL CENTER
+===================================== */
+
+.simulation-panel {
+    margin-bottom: 22px;
+}
+
+.simulation-status {
+    padding: 6px 11px;
+    border-radius: 20px;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.simulation-status.idle {
+    background: rgba(52, 211, 153, 0.1);
+    color: var(--green);
+}
+
+.simulation-status.running {
+    background: rgba(251, 146, 60, 0.12);
+    color: var(--orange);
+}
+
+.simulation-section {
+    padding: 17px 0;
+    border-top: 1px solid var(--border);
+}
+
+.simulation-section h3 {
+    margin: 0 0 6px;
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.simulation-section p {
+    margin: 0 0 14px;
+    color: var(--text-muted);
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.simulation-normal-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 11px;
+}
+
+.simulation-normal-controls label {
+    color: var(--text-secondary);
+    font-size: 11px;
+}
+
+.simulation-normal-controls input {
+    width: 75px;
+    height: 36px;
+    padding: 0 9px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    outline: none;
+    background: rgba(7, 16, 29, 0.78);
+    color: var(--text-primary);
+}
+
+.simulation-normal-controls input:focus {
+    border-color: var(--blue);
+}
+
+.simulation-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.simulation-button {
+    min-height: 36px;
+    padding: 9px 13px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    transition:
+        transform 150ms ease,
+        opacity 150ms ease,
+        background 150ms ease;
+}
+
+.simulation-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.simulation-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.normal-button {
+    border-color: rgba(56, 189, 248, 0.3);
+    background: rgba(56, 189, 248, 0.1);
+    color: var(--blue);
+}
+
+.attack-button {
+    border-color: rgba(251, 113, 133, 0.25);
+    background: rgba(251, 113, 133, 0.08);
+    color: #fda4af;
+}
+
+.random-button {
+    border-color: rgba(167, 139, 250, 0.3);
+    background: rgba(167, 139, 250, 0.1);
+    color: #c4b5fd;
+}
+
+.simulation-feedback {
+    margin: 8px 0 0;
+    color: var(--orange);
+    font-size: 10px;
+}
+
+.simulation-result {
+    margin-top: 10px;
+    padding: 11px 13px;
+    border-radius: 8px;
+    font-size: 10px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.simulation-result.success {
+    border: 1px solid rgba(52, 211, 153, 0.2);
+    background: rgba(52, 211, 153, 0.07);
+    color: var(--green);
+}
+
+.simulation-result.failure {
+    border: 1px solid rgba(251, 113, 133, 0.25);
+    background: rgba(251, 113, 133, 0.07);
+    color: #fda4af;
+}
+
+@media (max-width: 680px) {
+    .simulation-normal-controls {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .simulation-normal-controls input {
+        width: 100%;
+    }
+
+    .simulation-button {
+        flex: 1 1 auto;
+    }
+}

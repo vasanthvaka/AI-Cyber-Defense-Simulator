@@ -1,5 +1,12 @@
 from pathlib import Path
 
+from pydantic import BaseModel, Field
+
+from backend.simulation_controller import (
+    SimulationController,
+    SimulationBusyError
+)
+
 from fastapi import (
     FastAPI,
     HTTPException,
@@ -14,6 +21,13 @@ from storage.database import (
     SecurityDatabase
 )
 
+class NormalTrafficRequest(BaseModel):
+
+    count: int = Field(
+        default=10,
+        ge=1,
+        le=100
+    )
 
 PROJECT_ROOT = Path(
     __file__
@@ -59,6 +73,94 @@ def create_app(database=None):
         )
     )
 
+    app.state.simulation_controller = (
+        SimulationController(
+            database=app.state.database
+        )
+    )
+
+    # =====================================
+    # SIMULATION CONTROL ENDPOINTS
+    # =====================================
+
+    @app.get("/api/simulation/status")
+    def simulation_status():
+
+        return (
+            app.state.simulation_controller
+            .get_status()
+        )
+
+    @app.post("/api/simulation/normal")
+    def generate_normal_traffic(
+        request: NormalTrafficRequest
+    ):
+
+        try:
+
+            return (
+                app.state.simulation_controller
+                .generate_normal_batch(
+                    count=request.count
+                )
+            )
+
+        except SimulationBusyError as error:
+
+            raise HTTPException(
+                status_code=409,
+                detail=str(error)
+            )
+
+    @app.post(
+        "/api/simulation/attacks/random"
+    )
+    def inject_random_attack():
+
+        try:
+
+            return (
+                app.state.simulation_controller
+                .inject_random_attack()
+            )
+
+        except SimulationBusyError as error:
+
+            raise HTTPException(
+                status_code=409,
+                detail=str(error)
+            )
+
+    @app.post(
+        "/api/simulation/attacks/{attack_type}"
+    )
+    def inject_attack(
+        attack_type: str
+    ):
+
+        try:
+
+            return (
+                app.state.simulation_controller
+                .inject_attack(
+                    attack_type
+                )
+            )
+
+        except ValueError as error:
+
+            raise HTTPException(
+                status_code=400,
+                detail=str(error)
+            )
+
+        except SimulationBusyError as error:
+
+            raise HTTPException(
+                status_code=409,
+                detail=str(error)
+            )
+    
     def get_records(
         table_name,
         limit
