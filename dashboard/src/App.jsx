@@ -174,21 +174,27 @@ function StatCard({
     label,
     value,
     detail,
-    tone
+    tone,
+    badge,
+    icon
 }) {
-
     return (
-        <article
-            className={`stat-card ${tone}`}
-        >
+        <article className={`stat-card ${tone}`}>
             <div className="stat-card-top">
-                <span>{label}</span>
-                <span className="stat-indicator" />
+                <span className="stat-label-wrap">
+                    {icon && <span className="stat-icon">{icon}</span>}
+                    <span>{label}</span>
+                </span>
+                {badge ? <span className="stat-badge">{badge}</span> : <span className="stat-indicator" />}
             </div>
 
-            <strong>{value ?? 0}</strong>
+            <div className="stat-value-wrap">
+                <strong className="stat-value">
+                    {typeof value === "number" ? value.toLocaleString() : (value ?? 0)}
+                </strong>
+            </div>
 
-            <p>{detail}</p>
+            <p className="stat-detail">{detail}</p>
         </article>
     );
 }
@@ -225,14 +231,14 @@ function LiveConsoleModal({ entries = [], isRunning, onClose }) {
                 <div className="console-header">
                     <span className="console-title">
                         {isRunning
-                            ? <><span className="pulsing-dot"></span> LIVE CONSOLE</>
-                            : "LIVE CONSOLE (stopped)"}
+                            ? <><span className="pulsing-dot"></span> LIVE CONSOLE STREAM</>
+                            : "LIVE CONSOLE (offline)"}
                     </span>
                     <button className="console-close-btn" onClick={onClose}>✕ Close</button>
                 </div>
                 <div className="console-body">
                     {entries.length === 0 && (
-                        <div className="console-line system">Waiting for events…</div>
+                        <div className="console-line system">Waiting for telemetry events…</div>
                     )}
                     {entries.map((e, i) => (
                         <div key={i} className={`console-line ${typeClass(e.type)}`}>
@@ -246,6 +252,41 @@ function LiveConsoleModal({ entries = [], isRunning, onClose }) {
         </div>
     );
 }
+
+const ATTACK_SCENARIOS = [
+    {
+        id: "brute-force",
+        name: "Distributed Brute Force",
+        category: "Credential Stuffing",
+        severity: "HIGH",
+        icon: "🔨",
+        desc: "Rapid multi-source auth spray against authentication endpoints"
+    },
+    {
+        id: "ddos",
+        name: "Volumetric DDoS Assault",
+        category: "SYN / HTTP Flood",
+        severity: "CRITICAL",
+        icon: "🌊",
+        desc: "High-density packet barrage designed to saturate gateway capacity"
+    },
+    {
+        id: "port-scan",
+        name: "Stealth Reconnaissance",
+        category: "Perimeter Sweep",
+        severity: "MEDIUM",
+        icon: "📡",
+        desc: "Sequential TCP port probe mapping perimeter infrastructure"
+    },
+    {
+        id: "suspicious-process",
+        name: "Rogue Process Spawn",
+        category: "Privilege Escalation",
+        severity: "CRITICAL",
+        icon: "☣️",
+        desc: "Unauthorized shell execution & suspicious PID memory tampering"
+    }
+];
 
 function SimulationControls({
     busy,
@@ -275,18 +316,18 @@ function SimulationControls({
             <div className="panel-heading">
                 <div>
                     <p className="eyebrow">
-                        Simulation Environment
+                        THREAT EMULATION ENVIRONMENT
                     </p>
 
                     <h2>
-                        Simulation Control Center
+                        Tactical Simulation Deck
                     </h2>
                 </div>
 
                 <div className="status-indicators">
                     {isLive && (
-                        <span className="live-status-pill pulsing">
-                            <span className="pulsing-dot"></span> LIVE MODE ACTIVE (Seed: {liveMode.seed})
+                        <span className="live-status-pill">
+                            <span className="pulsing-dot"></span> LIVE RADAR ACTIVE (Seed: {liveMode.seed})
                         </span>
                     )}
                     <span className={
@@ -294,7 +335,7 @@ function SimulationControls({
                             ? "simulation-status running"
                             : "simulation-status idle"
                     }>
-                        {isLive ? "Live Streaming" : busy ? "Running" : "Idle"}
+                        {isLive ? "Telemetry Streaming" : busy ? "Deploying..." : "Standby"}
                     </span>
                 </div>
             </div>
@@ -302,26 +343,40 @@ function SimulationControls({
             {/* AUTONOMOUS MODES (DEMO & LIVE) */}
             <div className="simulation-section autonomous-section">
                 <div className="section-title-wrap">
-                    <h3>Autonomous Simulation Modes</h3>
+                    <h3>Autonomous Battle Stations</h3>
                     <p>
-                        Run end-to-end demonstrations or continuous background streaming directly from the SOC console.
+                        Execute end-to-end multi-stage attack scenarios or maintain continuous background telemetry streaming.
                     </p>
                 </div>
 
                 <div className="simulation-mode-cards">
                     {/* DEMO MODE CARD */}
                     <div className="mode-card demo-card">
-                        <div className="mode-card-header">
-                            <span className="mode-icon">🚀</span>
-                            <div>
-                                <strong>Demo Mode</strong>
-                                <span className="mode-subtitle">Automated 4-Stage Attack Lifecycle</span>
+                        <div>
+                            <div className="mode-card-header">
+                                <span className="mode-icon">🚀</span>
+                                <div>
+                                    <strong>Automated Demo Scenario</strong>
+                                    <span className="mode-subtitle">4-Stage Attack Lifecycle</span>
+                                </div>
+                            </div>
+
+                            <p className="mode-desc">
+                                Sequentially fires normal baselining, brute force, volumetric DDoS, stealth port scan, and suspicious execution with real-time AI evaluation.
+                            </p>
+
+                            <div className="stage-flow-pills">
+                                <span className="stage-pill">BASELINE</span>
+                                <span className="stage-arrow">→</span>
+                                <span className="stage-pill">AUTH SPRAY</span>
+                                <span className="stage-arrow">→</span>
+                                <span className="stage-pill">DDOS</span>
+                                <span className="stage-arrow">→</span>
+                                <span className="stage-pill">PORT SCAN</span>
+                                <span className="stage-arrow">→</span>
+                                <span className="stage-pill">ROGUE PID</span>
                             </div>
                         </div>
-
-                        <p className="mode-desc">
-                            Sequentially executes normal baselining, Distributed Brute Force, DDoS flood, Port Scan, and Suspicious Process execution with AI window evaluation.
-                        </p>
 
                         <div className="mode-controls">
                             <div className="seed-input-wrapper">
@@ -340,24 +395,26 @@ function SimulationControls({
                                 onClick={() => onRunDemo && onRunDemo(demoSeed)}
                                 disabled={busy || isLive}
                             >
-                                Run Demo Mode 🚀
+                                Launch Demo Scenario 🚀
                             </button>
                         </div>
                     </div>
 
                     {/* LIVE STREAMING MODE CARD */}
                     <div className={`mode-card live-card ${isLive ? "active-live" : ""}`}>
-                        <div className="mode-card-header">
-                            <span className="mode-icon">⚡</span>
-                            <div>
-                                <strong>Live Streaming Mode</strong>
-                                <span className="mode-subtitle">Real-Time Continuous Telemetry</span>
+                        <div>
+                            <div className="mode-card-header">
+                                <span className="mode-icon">⚡</span>
+                                <div>
+                                    <strong>Continuous Live Stream</strong>
+                                    <span className="mode-subtitle">Real-Time Threat Telemetry</span>
+                                </div>
                             </div>
-                        </div>
 
-                        <p className="mode-desc">
-                            Continuously streams normal traffic interspersed with unpredictable attacks at randomized intervals. Perfect for live SOC monitoring.
-                        </p>
+                            <p className="mode-desc">
+                                Emulates live SOC operations with uninterrupted traffic flow interspersed with randomized adversarial assault spikes at irregular intervals.
+                            </p>
+                        </div>
 
                         <div className="mode-controls">
                             {!isLive ? (
@@ -379,7 +436,7 @@ function SimulationControls({
                                             onClick={() => onStartLive && onStartLive(liveSeed, false)}
                                             disabled={busy}
                                         >
-                                            Start Live Mode 🟢
+                                            Engage Stream ⚡
                                         </button>
 
                                         <button
@@ -387,7 +444,7 @@ function SimulationControls({
                                             onClick={() => onStartLive && onStartLive(null, true)}
                                             disabled={busy}
                                         >
-                                            Random Seed Mode 🎲
+                                            Random Seed 🎲
                                         </button>
                                     </div>
                                 </>
@@ -402,14 +459,14 @@ function SimulationControls({
                                         className="simulation-button console-view-button"
                                         onClick={() => onViewConsole && onViewConsole()}
                                     >
-                                        📟 Console
+                                        📟 Terminal Feed
                                     </button>
 
                                     <button
                                         className="simulation-button stop-live-button"
                                         onClick={() => onStopLive && onStopLive()}
                                     >
-                                        Stop Live Mode ⏹️
+                                        Terminate Stream ⏹
                                     </button>
                                 </div>
                             )}
@@ -418,127 +475,115 @@ function SimulationControls({
                 </div>
             </div>
 
-            <div className="simulation-section">
-                <h3>Normal traffic</h3>
+            {/* TACTICAL THREAT ARSENAL */}
+            <div className="threat-arsenal-section">
+                <div className="section-title-wrap">
+                    <h3>Threat Arsenal // Targeted Assault Scenarios</h3>
+                    <p>
+                        Directly inject isolated attack vectors to test sensor fidelity, behavioral models, and automated counter-response agents.
+                    </p>
+                </div>
 
-                <p>
-                    Generate a batch of normal system activity
-                    to test how the detection pipeline handles
-                    legitimate events.
-                </p>
+                <div className="threat-arsenal-grid">
+                    {ATTACK_SCENARIOS.map(attack => (
+                        <div key={attack.id} className="threat-card">
+                            <div className="threat-card-top">
+                                <span className="threat-card-icon">{attack.icon}</span>
+                                <span className={`threat-severity-tag ${attack.severity.toLowerCase()}`}>
+                                    {attack.severity}
+                                </span>
+                            </div>
+                            <span className="threat-category">{attack.category}</span>
+                            <h4>{attack.name}</h4>
+                            <p>{attack.desc}</p>
+                            <button
+                                className="threat-launch-btn"
+                                onClick={() => onAttack(attack.id)}
+                                disabled={busy || isLive}
+                            >
+                                Launch Assault ⚡
+                            </button>
+                        </div>
+                    ))}
+                </div>
 
-                <div className="simulation-normal-controls">
-                    <label htmlFor="normal-count">
-                        Number of events
-                    </label>
-
-                    <input
-                        id="normal-count"
-                        type="number"
-                        min="1"
-                        max="100"
-                        value={normalCount}
-                        onChange={event => {
-                            const value = Number(
-                                event.target.value
-                            );
-
-                            setNormalCount(
-                                Math.min(
-                                    100,
-                                    Math.max(1, value || 1)
-                                )
-                            );
-                        }}
-                        disabled={busy || isLive}
-                    />
-
+                <div className="random-attack-strip">
+                    <div className="random-strip-text">
+                        <strong>🎲 Unpredictable Adversary Injection</strong>
+                        <p>Simulates an unknown threat actor by dynamically selecting an evasion technique at runtime.</p>
+                    </div>
                     <button
-                        className="simulation-button normal-button"
-                        onClick={() =>
-                            onNormalTraffic(normalCount)
-                        }
+                        className="simulation-button random-seed-button"
+                        onClick={onRandomAttack}
                         disabled={busy || isLive}
                     >
-                        Generate normal traffic
+                        Deploy Random Threat 🎲
                     </button>
                 </div>
             </div>
 
-            <div className="simulation-section">
-                <h3>Individual Attack simulation</h3>
+            {/* NORMAL TELEMETRY GENERATOR */}
+            <div className="normal-traffic-section">
+                <div className="section-title-wrap">
+                    <h3>Baseline Telemetry Generator</h3>
+                    <p>
+                        Stream legitimate network flows, authentications, and system transactions to evaluate anomaly false-positive tolerance.
+                    </p>
+                </div>
 
-                <p>
-                    Select an individual attack scenario or
-                    let the simulator choose one randomly.
-                </p>
+                <div className="normal-controls-row">
+                    <div className="preset-pills">
+                        {[10, 25, 50, 100].map(count => (
+                            <button
+                                key={count}
+                                type="button"
+                                className="preset-pill"
+                                onClick={() => setNormalCount(count)}
+                                disabled={busy || isLive}
+                            >
+                                +{count}
+                            </button>
+                        ))}
+                    </div>
 
-                <div className="simulation-actions">
-                    <button
-                        className="simulation-button attack-button"
-                        onClick={() =>
-                            onAttack("brute-force")
-                        }
-                        disabled={busy || isLive}
-                    >
-                        Brute force
-                    </button>
-
-                    <button
-                        className="simulation-button attack-button"
-                        onClick={() =>
-                            onAttack("ddos")
-                        }
-                        disabled={busy || isLive}
-                    >
-                        DDoS
-                    </button>
-
-                    <button
-                        className="simulation-button attack-button"
-                        onClick={() =>
-                            onAttack("port-scan")
-                        }
-                        disabled={busy || isLive}
-                    >
-                        Port scan
-                    </button>
+                    <div className="normal-input-wrap">
+                        <label htmlFor="normal-count">Count:</label>
+                        <input
+                            id="normal-count"
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={normalCount}
+                            onChange={e => setNormalCount(Math.min(100, Math.max(1, Number(e.target.value) || 1)))}
+                            disabled={busy || isLive}
+                        />
+                    </div>
 
                     <button
-                        className="simulation-button attack-button"
-                        onClick={() =>
-                            onAttack("suspicious-process")
-                        }
+                        className="simulation-button normal-button"
+                        onClick={() => onNormalTraffic(normalCount)}
                         disabled={busy || isLive}
                     >
-                        Suspicious process
-                    </button>
-
-                    <button
-                        className="simulation-button random-button"
-                        onClick={onRandomAttack}
-                        disabled={busy || isLive}
-                    >
-                        Random attack
+                        Generate Normal Traffic 🟢
                     </button>
                 </div>
             </div>
 
             {busy && (
-                <p className="simulation-feedback">
-                    Simulation is being processed. Please wait...
-                </p>
+                <div className="simulation-feedback">
+                    ⚡ Telemetry generation & threat analysis in progress. Sensors correlating vectors...
+                </div>
             )}
 
             {message && (
                 <div className="simulation-result success">
-                    {message}
+                    ✓ {message}
                 </div>
             )}
 
             {error && (
                 <div className="simulation-result failure">
-                    {error}
+                    ⚠ {error}
                 </div>
             )}
         </section>
@@ -620,38 +665,38 @@ function Overview({
             <section className="stat-grid">
                 <StatCard
                     label="Security Events"
-                    value={
-                        data.statistics.events
-                    }
-                    detail="Total activity observed"
-                    tone="blue"
+                    value={data.statistics.events}
+                    detail="Observed network & system packets"
+                    tone="emerald"
+                    badge="TELEMETRY"
+                    icon="📡"
                 />
 
                 <StatCard
                     label="Active Incidents"
-                    value={
-                        data.statistics.incidents
-                    }
-                    detail="Correlated threats"
-                    tone="orange"
+                    value={data.statistics.incidents}
+                    detail="Correlated multi-source threats"
+                    tone="red"
+                    badge="THREATS"
+                    icon="🚨"
                 />
 
                 <StatCard
                     label="Security Alerts"
-                    value={
-                        data.statistics.alerts
-                    }
-                    detail="Rule and AI detections"
-                    tone="red"
+                    value={data.statistics.alerts}
+                    detail="Rule & ML anomaly triggers"
+                    tone="orange"
+                    badge="DETECTIONS"
+                    icon="⚡"
                 />
 
                 <StatCard
-                    label="Responses"
-                    value={
-                        data.statistics.responses
-                    }
-                    detail="Simulated actions"
-                    tone="green"
+                    label="Autonomous Mitigations"
+                    value={data.statistics.responses}
+                    detail="Automated agent countermeasures"
+                    tone="purple"
+                    badge="DEFENDED"
+                    icon="🛡️"
                 />
             </section>
 
@@ -1517,165 +1562,122 @@ function IncidentDrawer({
         return null;
     }
 
+    const severity = (incident.severity || "unknown").toLowerCase();
+
     return (
         <div
             className="drawer-backdrop"
             onClick={onClose}
         >
             <aside
-                className="incident-drawer"
-                onClick={
-                    event =>
-                        event.stopPropagation()
-                }
+                className={`incident-drawer severity-border-${severity}`}
+                onClick={event => event.stopPropagation()}
             >
-                <button
-                    className="drawer-close"
-                    onClick={onClose}
-                    aria-label={
-                        "Close incident details"
-                    }
-                >
-                    ×
-                </button>
+                <div className="drawer-top-bar" />
 
-                <p className="eyebrow">
-                    Incident details
-                </p>
-
-                <h2>
-                    {
-                        formatLabel(
-                            incident.incident_type
-                        )
-                    }
-                </h2>
-
-                <span
-                    className={
-                        severityClass(
-                            incident.severity
-                        )
-                    }
-                >
-                    {incident.severity}
-                </span>
-
-                <dl className="incident-details">
-                    <div>
-                        <dt>Incident ID</dt>
-                        <dd>
-                            {incident.incident_id}
-                        </dd>
+                <div className="drawer-header-row">
+                    <div className="drawer-title-group">
+                        <span className="drawer-tag">THREAT DOSSIER // CLASSIFIED INTEL</span>
+                        <h2>
+                            {formatLabel(incident.incident_type)}
+                        </h2>
+                        <div className="drawer-badges">
+                            <span className={severityClass(incident.severity)}>
+                                {incident.severity} THREAT
+                            </span>
+                            <span className="confidence-pill">
+                                CONFIDENCE: {Math.round((incident.confidence || 0) * 100)}%
+                            </span>
+                            <span className="status-pill-subtle">
+                                {formatLabel(incident.status)}
+                            </span>
+                        </div>
                     </div>
 
-                    <div>
-                        <dt>Status</dt>
-                        <dd>
-                            {
-                                formatLabel(
-                                    incident.status
-                                )
-                            }
-                        </dd>
+                    <button
+                        className="drawer-close"
+                        onClick={onClose}
+                        aria-label="Close incident details"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                {/* 4 HUD METRIC CARDS */}
+                <div className="incident-hud-grid">
+                    <div className="hud-metric-card">
+                        <span className="hud-metric-label">INCIDENT IDENTIFIER</span>
+                        <strong className="hud-metric-value monospace">{incident.incident_id}</strong>
                     </div>
 
-                    <div>
-                        <dt>Confidence</dt>
-                        <dd>
-                            {
-                                Math.round(
-                                    incident.confidence
-                                    * 100
-                                )
-                            }%
-                        </dd>
+                    <div className="hud-metric-card">
+                        <span className="hud-metric-label">DETECTION ENGINES</span>
+                        <strong className="hud-metric-value">
+                            {(payload.detection_methods || []).map(formatLabel).join(", ") || "Rule Engine"}
+                        </strong>
                     </div>
 
-                    <div>
-                        <dt>Detection methods</dt>
-                        <dd>
-                            {
-                                (
-                                    payload.detection_methods
-                                    || []
-                                )
-                                    .map(formatLabel)
-                                    .join(", ")
-                                || "Unknown"
-                            }
-                        </dd>
+                    <div className="hud-metric-card">
+                        <span className="hud-metric-label">SOURCE / TARGET ENTITY</span>
+                        <strong className="hud-metric-value monospace">{getIncidentSources(incident)}</strong>
                     </div>
 
-                    <div>
-                        <dt>Sources</dt>
-                        <dd>
-                            {
-                                getIncidentSources(
-                                    incident
-                                )
-                            }
-                        </dd>
+                    <div className="hud-metric-card">
+                        <span className="hud-metric-label">SUPPORTING ALERTS</span>
+                        <strong className="hud-metric-value">{payload.alerts?.length || 0} correlated events</strong>
                     </div>
+                </div>
 
-                    <div>
-                        <dt>Supporting alerts</dt>
-                        <dd>
-                            {
-                                payload.alerts?.length
-                                || 0
-                            }
-                        </dd>
+                {/* TIMELINE METRICS */}
+                <div className="incident-timeline-strip">
+                    <div className="timeline-node">
+                        <span className="timeline-dot" />
+                        <div>
+                            <span className="timeline-label">FIRST DETECTED</span>
+                            <span className="timeline-time">{formatTimestamp(incident.created_at)}</span>
+                        </div>
                     </div>
-
-                    <div>
-                        <dt>Created</dt>
-                        <dd>
-                            {
-                                formatTimestamp(
-                                    incident.created_at
-                                )
-                            }
-                        </dd>
+                    <div className="timeline-connector" />
+                    <div className="timeline-node">
+                        <span className="timeline-dot active" />
+                        <div>
+                            <span className="timeline-label">LAST OBSERVED</span>
+                            <span className="timeline-time">{formatTimestamp(incident.updated_at)}</span>
+                        </div>
                     </div>
+                </div>
 
-                    <div>
-                        <dt>Last updated</dt>
-                        <dd>
-                            {
-                                formatTimestamp(
-                                    incident.updated_at
-                                )
-                            }
-                        </dd>
-                    </div>
-                </dl>
-
+                {/* AI EXPLAINER LAYER */}
                 <div className="ai-explainer-section">
                     <div className="ai-explainer-header">
                         <div>
-                            <p className="eyebrow">AI Analysis Layer</p>
-                            <h3>SOC Incident Explanation</h3>
+                            <span className="ai-section-tag">AI DEFENSE INTELLIGENCE</span>
+                            <h3>Neural Incident Advisor</h3>
+                            <p className="ai-subtitle">Autonomous LLM correlation & defensive playbook synthesis</p>
                         </div>
                         <button
                             className="ai-explain-button"
                             onClick={handleExplain}
                             disabled={explaining}
                         >
-                            {explaining ? "Analyzing with AI..." : explanation ? "Re-Analyze ✨" : "Explain with AI ✨"}
+                            {explaining ? "Synthesizing..." : explanation ? "Re-Analyze ✨" : "Explain with AI ✨"}
                         </button>
                     </div>
 
                     {explainError && (
                         <div className="ai-error-banner">
-                            {explainError}
+                            <span>⚠</span>
+                            <p>{explainError}</p>
                         </div>
                     )}
 
                     {explaining && (
                         <div className="ai-loading-card">
-                            <span className="spinner-icon">⚡</span>
-                            <p>Translating detection telemetry & anomaly vectors into plain English...</p>
+                            <span className="spinner-icon radar-spin">⚡</span>
+                            <div>
+                                <strong>Consulting Security LLM Layer...</strong>
+                                <p>Synthesizing telemetry anomalies, attack patterns & counter-response vectors.</p>
+                            </div>
                         </div>
                     )}
 
@@ -1683,47 +1685,56 @@ function IncidentDrawer({
                         <div className="ai-explanation-content">
                             <div className="ai-badge-row">
                                 <span className={`ai-source-badge ${explanation.source === "ollama" ? "ollama" : "fallback"}`}>
-                                    {explanation.source === "ollama" ? `Ollama (${explanation.model})` : `Offline Template Engine`}
+                                    {explanation.source === "ollama" ? `🤖 Ollama (${explanation.model || "llama3.2"})` : `🛡️ Local Hybrid Engine`}
                                 </span>
                                 {explanation.why_flagged?.primary_detector && (
                                     <span className="ai-detector-badge">
-                                        {explanation.why_flagged.primary_detector}
+                                        Vector: {explanation.why_flagged.primary_detector}
                                     </span>
                                 )}
                             </div>
 
                             <div className="ai-card">
-                                <h4>Executive Summary</h4>
+                                <h4>📋 Executive Threat Summary</h4>
                                 <p>{explanation.summary}</p>
                             </div>
 
                             <div className="ai-card">
-                                <h4>Why Was This Detected?</h4>
+                                <h4>🎯 Why Was This Detected?</h4>
                                 <p>{explanation.why_flagged?.plain_explanation || explanation.root_cause}</p>
                                 {explanation.why_flagged?.key_signals && explanation.why_flagged.key_signals.length > 0 && (
                                     <ul className="ai-signals-list">
                                         {explanation.why_flagged.key_signals.map((sig, idx) => (
-                                            <li key={idx}><strong>Signal:</strong> {sig}</li>
+                                            <li key={idx}><strong>Signal {idx + 1}:</strong> {sig}</li>
                                         ))}
                                     </ul>
                                 )}
                             </div>
 
                             <div className="ai-card">
-                                <h4>Why Was This Response Chosen?</h4>
+                                <h4>🛡️ Defense Response Rationale</h4>
                                 <p>{explanation.why_response_chosen}</p>
                             </div>
 
                             <div className="ai-card">
-                                <h4>Recommended Measures</h4>
+                                <h4>⚡ Recommended Countermeasures</h4>
                                 <ul className="ai-measures-list">
                                     {explanation.recommended_measures?.map((measure, idx) => (
-                                        <li key={idx}>{measure}</li>
+                                        <li key={idx}>
+                                            <span className="measure-check">✓</span>
+                                            <span>{measure}</span>
+                                        </li>
                                     ))}
                                 </ul>
                             </div>
                         </div>
                     )}
+                </div>
+
+                <div className="drawer-footer">
+                    <button className="drawer-dismiss-btn" onClick={onClose}>
+                        Close Dossier [ESC]
+                    </button>
                 </div>
             </aside>
         </div>
@@ -1784,6 +1795,51 @@ function App() {
 
     const [showConsole, setShowConsole] = useState(false);
     const [liveLog, setLiveLog] = useState([]);
+    const [toasts, setToasts] = useState([]);
+    const [zuluTime, setZuluTime] = useState(() => new Date().toISOString().substring(11, 19));
+
+    const addToast = useCallback((type, title, message) => {
+        const id = Date.now() + Math.random();
+        setToasts(prev => [...prev.slice(-3), { id, type, title, message }]);
+        setTimeout(() => {
+            setToasts(prev => prev.filter(t => t.id !== id));
+        }, 4500);
+    }, []);
+
+    const dismissToast = useCallback((id) => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+    }, []);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setZuluTime(new Date().toISOString().substring(11, 19));
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") {
+                setSelectedIncident(null);
+                setShowConsole(false);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, []);
+
+    const defconStatus = useMemo(() => {
+        if (!data.incidents || data.incidents.length === 0) {
+            return { level: "defcon-nominal", label: "DEFCON 4 // NOMINAL" };
+        }
+        if (data.incidents.some(i => i.severity === "CRITICAL")) {
+            return { level: "defcon-1", label: "DEFCON 1 // CRITICAL" };
+        }
+        if (data.incidents.some(i => i.severity === "HIGH")) {
+            return { level: "defcon-2", label: "DEFCON 2 // ELEVATED" };
+        }
+        return { level: "defcon-nominal", label: "DEFCON 3 // GUARDED" };
+    }, [data.incidents]);
 
     const loadData = useCallback(
         async (
@@ -1853,6 +1909,12 @@ function App() {
                 + `${result.message}`
             );
 
+            addToast(
+                result.operation?.toLowerCase().includes("attack") ? "attack" : "success",
+                result.operation ? `${formatLabel(result.operation)} EXECUTED` : "SIMULATION SUCCESS",
+                `${result.events_generated || 0} events dispatched. ${result.message || ""}`
+            );
+
             await loadData(true);
 
         } catch (requestError) {
@@ -1860,6 +1922,8 @@ function App() {
             setSimulationError(
                 requestError.message
             );
+
+            addToast("error", "SIMULATION FAULT", requestError.message || "Failed to execute simulation");
 
         } finally {
 
@@ -1884,11 +1948,13 @@ function App() {
             setLiveLog([]);
             setShowConsole(true);
             setSimulationMessage(result.message);
+            addToast("live", "LIVE RADAR STREAM ENGAGED", `Real-time telemetry active (Seed: ${seed || "Random"})`);
             await loadData(true);
         } catch (err) {
             setSimulationError(
                 err.message || "Failed to start live simulation"
             );
+            addToast("error", "LIVE STREAM ERROR", err.message || "Could not start live stream");
         } finally {
             setSimulationBusy(false);
         }
@@ -1905,11 +1971,13 @@ function App() {
                 attacks_injected: 0
             });
             setSimulationMessage(result.message);
+            addToast("info", "LIVE STREAM TERMINATED", "Background telemetry collection stopped.");
             await loadData(true);
         } catch (err) {
             setSimulationError(
                 err.message || "Failed to stop live simulation"
             );
+            addToast("error", "TERMINATION ERROR", err.message || "Could not stop live stream");
         } finally {
             setSimulationBusy(false);
         }
@@ -2095,15 +2163,15 @@ function App() {
             <aside className="sidebar">
                 <div className="brand">
                     <div className="brand-mark">
-                        CD
+                        🛡️
                     </div>
 
-                    <div>
+                    <div className="brand-text-wrap">
                         <strong>
-                            CyberDefence
+                            Cyber Shield
                         </strong>
                         <span>
-                            AI Security Operations
+                            Autonomous Defense
                         </span>
                     </div>
                 </div>
@@ -2127,7 +2195,7 @@ function App() {
                                             )
                                     }
                                 >
-                                    <span>
+                                    <span className="nav-symbol">
                                         {item.symbol}
                                     </span>
 
@@ -2139,11 +2207,11 @@ function App() {
                 </nav>
 
                 <div className="sidebar-status">
-                    <span className="status-dot" />
+                    <span className="status-dot-pulse" />
 
                     <div>
                         <strong>
-                            System operational
+                            Core Engine: Active
                         </strong>
                         <p>
                             API: {
@@ -2156,9 +2224,9 @@ function App() {
 
             <main className="main-content">
                 <header className="topbar">
-                    <div>
+                    <div className="topbar-title-wrap">
                         <p className="eyebrow">
-                            Security Operations Centre
+                            CYBER SHIELD // AUTONOMOUS CYBER DEFENSE OPERATIONS
                         </p>
 
                         <h1>
@@ -2175,9 +2243,18 @@ function App() {
                     </div>
 
                     <div className="topbar-actions">
+                        <div className={`defcon-badge ${defconStatus.level}`}>
+                            {defconStatus.label}
+                        </div>
+
+                        <div className="zulu-clock">
+                            <span>ZULU TIME (UTC)</span>
+                            <strong>{zuluTime} Z</strong>
+                        </div>
+
                         <div className="updated-time">
                             <span>
-                                Last updated
+                                LAST TELEMETRY SYNC  
                             </span>
 
                             <strong>
@@ -2185,7 +2262,7 @@ function App() {
                                     lastUpdated
                                         ? lastUpdated
                                             .toLocaleTimeString()
-                                        : "Waiting..."
+                                        : "PENDING"
                                 }
                             </strong>
                         </div>
@@ -2200,8 +2277,8 @@ function App() {
                         >
                             {
                                 refreshing
-                                    ? "Refreshing..."
-                                    : "Refresh data"
+                                    ? "Syncing..."
+                                    : "Sync Telemetry 🔄"
                             }
                         </button>
                     </div>
@@ -2265,6 +2342,31 @@ function App() {
                     onClose={() => setShowConsole(false)}
                 />
             )}
+
+            <div className="toast-container">
+                {toasts.map(toast => (
+                    <div
+                        key={toast.id}
+                        className={`toast-card toast-${toast.type}`}
+                        onClick={() => dismissToast(toast.id)}
+                    >
+                        <div className="toast-header">
+                            <span className="toast-badge">{toast.type.toUpperCase()}</span>
+                            <button
+                                className="toast-close"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    dismissToast(toast.id);
+                                }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <strong className="toast-title">{toast.title}</strong>
+                        <p className="toast-message">{toast.message}</p>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
