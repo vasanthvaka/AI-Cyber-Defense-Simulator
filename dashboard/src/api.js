@@ -213,6 +213,15 @@ export async function fetchLiveLog() {
     return request("/api/simulation/live/log");
 }
 
+export async function resetDatabase() {
+    return request(
+        "/api/simulation/reset",
+        {
+            method: "POST"
+        }
+    );
+}
+
 export {
     API_BASE_URL
 };

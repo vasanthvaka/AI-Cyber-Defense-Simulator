@@ -241,6 +241,20 @@ def create_app(database=None):
             "events_generated": ctrl.live_status.get("events_generated", 0),
             "attacks_injected": ctrl.live_status.get("attacks_injected", 0)
         }
+
+    @app.post("/api/simulation/reset")
+    def reset_simulation():
+
+        try:
+            return (
+                app.state.simulation_controller
+                .reset_simulation()
+            )
+        except Exception as error:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Database reset failed: {str(error)}"
+            )
     
     def get_records(
         table_name,

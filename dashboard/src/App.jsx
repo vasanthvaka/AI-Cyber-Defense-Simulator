@@ -2,6 +2,7 @@ import {
     useCallback,
     useEffect,
     useMemo,
+    useRef,
     useState
 } from "react";
 
@@ -14,6 +15,7 @@ import {
     generateNormalTraffic,
     injectAttack,
     injectRandomAttack,
+    resetDatabase,
     runDemoSimulation,
     startLiveSimulation,
     stopLiveSimulation
@@ -153,6 +155,53 @@ function CloseIcon({ size = 11 }) {
     );
 }
 
+function TrashIcon() {
+    return (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        </svg>
+    );
+}
+
+/* ==========================================================================
+   MATRIX RAIN CANVAS (BOOT SEQUENCE BACKGROUND)
+   ========================================================================== */
+
+function MatrixCanvas() {
+    const canvasRef = useRef(null);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const W = canvas.width = canvas.offsetWidth;
+        const H = canvas.height = canvas.offsetHeight;
+        const fontSize = 11;
+        const cols = Math.floor(W / fontSize);
+        const drops = Array.from({ length: cols }, () => Math.random() * -50);
+        const chars = "アイウエオカキクケコ01ABCDEF⬡⬢⬣⬤⬥:;!?#$%&AEGIS".split("");
+
+        const draw = () => {
+            ctx.fillStyle = "rgba(6, 9, 16, 0.07)";
+            ctx.fillRect(0, 0, W, H);
+            ctx.font = `${fontSize}px "JetBrains Mono", monospace`;
+            drops.forEach((y, i) => {
+                const char = chars[Math.floor(Math.random() * chars.length)];
+                const brightness = Math.random() > 0.95 ? "#93c5fd" : "rgba(59, 130, 246, 0.6)";
+                ctx.fillStyle = brightness;
+                ctx.fillText(char, i * fontSize, y * fontSize);
+                drops[i] = y > H / fontSize && Math.random() > 0.975 ? 0 : y + 1;
+            });
+        };
+
+        const id = setInterval(draw, 55);
+        return () => clearInterval(id);
+    }, []);
+
+    return <canvas ref={canvasRef} className="boot-matrix-canvas" style={{ width: "100%", height: "100%" }} />;
+}
+
 /* ==========================================================================
    CINEMATIC BOOT INTRO SEQUENCE (HIGH-PRODUCTION NETFLIX STYLE)
    ========================================================================== */
@@ -198,6 +247,7 @@ function BootSequence({ onComplete }) {
 
     return (
         <div className={`boot-overlay ${isFading ? "fading-out" : ""}`} onClick={handleDismiss}>
+            <MatrixCanvas />
             <div className="boot-container" onClick={e => e.stopPropagation()}>
                 <div className="boot-emblem-wrap">
                     <div className="boot-energy-ring" />
@@ -1571,6 +1621,7 @@ function App() {
     const [simulationBusy, setSimulationBusy] = useState(false);
     const [simulationMessage, setSimulationMessage] = useState("");
     const [simulationError, setSimulationError] = useState("");
+    const [resetting, setResetting] = useState(false);
 
     const [liveMode, setLiveMode] = useState({
         is_running: false,
@@ -1684,6 +1735,23 @@ function App() {
 
     const handleRunDemo = async (seed = 42) => {
         await runSimulation(runDemoSimulation, seed);
+    };
+
+    const handleResetDatabase = async () => {
+        if (!window.confirm("Purge all security telemetry, incidents, and mitigations? Database will be reset to 0 for a clean demonstration.")) {
+            return;
+        }
+
+        setResetting(true);
+        try {
+            await resetDatabase();
+            addToast("info", "DATABASE PURGED", "All security operations data reset to 0.");
+            await loadData(false);
+        } catch (err) {
+            addToast("error", "RESET FAILED", err.message || "Failed to reset database");
+        } finally {
+            setResetting(false);
+        }
     };
 
     const handleStartLive = async (seed = null, useRandomSeed = false) => {
@@ -1843,8 +1911,19 @@ function App() {
     }
 
     return (
-        <div className="app-shell">
-            <aside className="sidebar">
+        <div className="app-root-container">
+            {/* Ambient animated glowing cyber background */}
+            <div className="ambient-background" aria-hidden="true">
+                <div className="bg-orb bg-orb-1" />
+                <div className="bg-orb bg-orb-2" />
+                <div className="bg-orb bg-orb-3" />
+                <div className="bg-orb bg-orb-4" />
+                <div className="cyber-grid-overlay" />
+                <div className="scanline-overlay" />
+            </div>
+
+            <div className="app-shell">
+                <aside className="sidebar">
                 <div
                     className="brand"
                     onClick={() => setBooting(true)}
@@ -1918,8 +1997,18 @@ function App() {
                             onClick={() => loadData(true)}
                             disabled={refreshing}
                         >
-                            <RefreshIcon />
+                            <span className={refreshing ? "refreshing-icon" : ""}><RefreshIcon /></span>
                             <span>{refreshing ? "Syncing..." : "Sync Telemetry"}</span>
+                        </button>
+
+                        <button
+                            className="btn btn-outline btn-sm btn-reset-db"
+                            onClick={handleResetDatabase}
+                            disabled={resetting || refreshing || simulationBusy}
+                            title="Purge all database records to 0 for a clean demo"
+                        >
+                            <TrashIcon />
+                            <span>{resetting ? "Purging..." : "Reset DB"}</span>
                         </button>
                     </div>
                 </header>
@@ -1968,6 +2057,7 @@ function App() {
                         className={`toast-card toast-${toast.type}`}
                         onClick={() => dismissToast(toast.id)}
                     >
+                        <div className="toast-progress" />
                         <div className="toast-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                             <span className="technique-tag" style={{ fontSize: 9 }}>{toast.type.toUpperCase()}</span>
                             <button
@@ -1990,6 +2080,7 @@ function App() {
                 <BootSequence onComplete={() => setBooting(false)} />
             )}
         </div>
+    </div>
     );
 }
 

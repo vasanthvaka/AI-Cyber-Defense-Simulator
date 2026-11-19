@@ -68,6 +68,9 @@ def detect_port_scan(event):
     ):
         flagged_scanners[scanner_target] = current_time
 
+        # Small scans = LOW, broader sweeps = MEDIUM
+        severity = "MEDIUM" if len(unique_ports) >= 13 else "LOW"
+
         return {
             "attack_type": "PORT_SCAN",
             "source_ip": source_ip,
@@ -75,7 +78,7 @@ def detect_port_scan(event):
             "ports_scanned": sorted(unique_ports),
             "unique_port_count": len(unique_ports),
             "time_window": TIME_WINDOW,
-            "severity": "MEDIUM"
+            "severity": severity
         }
 
     return None

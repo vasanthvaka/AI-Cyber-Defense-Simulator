@@ -104,19 +104,38 @@ button {
    APP SHELL & SIDEBAR (FROSTED GLASS & AMBIENT CYBER MESH)
    ========================================================================== */
 
+.app-root-container {
+    position: relative;
+    min-height: 100vh;
+    background-color: #060911;
+    overflow-x: hidden;
+}
+
+.ambient-background {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.cyber-grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: -1px -1px;
+}
+
 .app-shell {
     min-height: 100vh;
     display: grid;
     grid-template-columns: 240px minmax(0, 1fr);
-    background-color: var(--bg-base);
-    background-image: 
-        radial-gradient(circle at 85% 15%, rgba(59, 130, 246, 0.08) 0%, transparent 45%),
-        radial-gradient(circle at 15% 85%, rgba(139, 92, 246, 0.06) 0%, transparent 40%),
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
-    background-position: 0 0, 0 0, -1px -1px, -1px -1px;
+    background: transparent;
     position: relative;
+    z-index: 10;
 }
 
 .sidebar {
@@ -453,6 +472,18 @@ button {
     box-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
 }
 
+.btn-reset-db {
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.08);
+}
+.btn-reset-db:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: var(--red);
+    color: #ffffff;
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.35);
+}
+
 .btn-sm {
     padding: 5px 10px;
     font-size: 11px;
@@ -571,10 +602,12 @@ button {
 
 .panel {
     padding: 20px 22px;
-    border: 1px solid var(--border-subtle);
+    border: 1px solid rgba(39, 53, 79, 0.7);
     border-radius: 8px;
-    background: var(--bg-surface);
-    box-shadow: var(--shadow-sm);
+    background: rgba(14, 20, 34, 0.78);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
     margin-bottom: 24px;
 }
 
@@ -2301,3 +2334,384 @@ td strong {
 .stagger-4 { animation-delay: 160ms; }
 
 
+
+/* ==========================================================================
+   ANIMATED BACKGROUND — DRIFTING GRADIENT ORBS
+   ========================================================================== */
+
+@keyframes orb-drift-1 {
+    0%   { transform: translate(0px, 0px) scale(1); }
+    33%  { transform: translate(70px, -50px) scale(1.12); }
+    66%  { transform: translate(-40px, 45px) scale(0.92); }
+    100% { transform: translate(0px, 0px) scale(1); }
+}
+@keyframes orb-drift-2 {
+    0%   { transform: translate(0px, 0px) scale(1); }
+    40%  { transform: translate(-80px, 60px) scale(1.15); }
+    70%  { transform: translate(50px, -40px) scale(0.88); }
+    100% { transform: translate(0px, 0px) scale(1); }
+}
+@keyframes orb-drift-3 {
+    0%   { transform: translate(0px, 0px) scale(1); }
+    50%  { transform: translate(90px, 45px) scale(1.1); }
+    100% { transform: translate(0px, 0px) scale(1); }
+}
+@keyframes orb-drift-4 {
+    0%   { transform: translate(0px, 0px) scale(1); opacity: 0.35; }
+    50%  { transform: translate(-60px, -65px) scale(1.2); opacity: 0.65; }
+    100% { transform: translate(0px, 0px) scale(1); opacity: 0.35; }
+}
+
+.bg-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    will-change: transform;
+}
+.bg-orb-1 {
+    width: 680px;
+    height: 680px;
+    top: -120px;
+    right: 8%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.55) 0%, rgba(37, 99, 235, 0.35) 35%, rgba(29, 78, 216, 0.15) 58%, transparent 75%);
+    filter: blur(55px);
+    animation: orb-drift-1 16s ease-in-out infinite alternate;
+}
+.bg-orb-2 {
+    width: 600px;
+    height: 600px;
+    bottom: -100px;
+    left: 10%;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.5) 0%, rgba(147, 51, 234, 0.3) 38%, rgba(126, 34, 206, 0.12) 60%, transparent 75%);
+    filter: blur(60px);
+    animation: orb-drift-2 20s ease-in-out infinite alternate;
+}
+.bg-orb-3 {
+    width: 520px;
+    height: 520px;
+    top: 35%;
+    left: 45%;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.42) 0%, rgba(5, 150, 105, 0.22) 38%, rgba(4, 120, 87, 0.08) 60%, transparent 72%);
+    filter: blur(52px);
+    animation: orb-drift-3 24s ease-in-out infinite alternate;
+}
+.bg-orb-4 {
+    width: 480px;
+    height: 480px;
+    top: 6%;
+    left: 4%;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.4) 0%, rgba(239, 68, 68, 0.2) 42%, transparent 70%);
+    filter: blur(55px);
+    animation: orb-drift-4 18s ease-in-out infinite alternate;
+}
+
+/* ==========================================================================
+   ANIMATED SCANLINE OVERLAY
+   ========================================================================== */
+
+@keyframes scanline-scroll {
+    from { background-position: 0 0; }
+    to   { background-position: 0 100vh; }
+}
+
+.scanline-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 3px,
+        rgba(255, 255, 255, 0.012) 3px,
+        rgba(255, 255, 255, 0.012) 4px
+    );
+    animation: scanline-scroll 12s linear infinite;
+}
+
+/* ==========================================================================
+   KPI CARD — ANIMATED NUMBER ROLL-UP
+   ========================================================================== */
+
+@keyframes kpi-pop {
+    0%   { opacity: 0; transform: translateY(8px) scale(0.96); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.kpi-card {
+    animation: kpi-pop 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.kpi-card:nth-child(1) { animation-delay: 0ms; }
+.kpi-card:nth-child(2) { animation-delay: 60ms; }
+.kpi-card:nth-child(3) { animation-delay: 120ms; }
+.kpi-card:nth-child(4) { animation-delay: 180ms; }
+
+/* KPI value flicker-in */
+@keyframes kpi-value-tick {
+    0%  { opacity: 0; filter: blur(4px); }
+    60% { opacity: 0.7; filter: blur(1px); }
+    100% { opacity: 1; filter: blur(0); }
+}
+.kpi-value {
+    animation: kpi-value-tick 600ms ease both;
+}
+
+/* ==========================================================================
+   SEVERITY BAR — ANIMATED SWEEP
+   ========================================================================== */
+
+@keyframes bar-sweep {
+    from { width: 0 !important; }
+}
+
+.bar-fill {
+    animation: bar-sweep 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.severity-row:nth-child(1) .bar-fill { animation-delay: 100ms; }
+.severity-row:nth-child(2) .bar-fill { animation-delay: 180ms; }
+.severity-row:nth-child(3) .bar-fill { animation-delay: 260ms; }
+.severity-row:nth-child(4) .bar-fill { animation-delay: 340ms; }
+
+/* ==========================================================================
+   ACTIVITY ITEM — SLIDE-IN STAGGER
+   ========================================================================== */
+
+@keyframes activity-slide-in {
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+.activity-item {
+    animation: activity-slide-in 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.activity-item:nth-child(1) { animation-delay: 0ms; }
+.activity-item:nth-child(2) { animation-delay: 50ms; }
+.activity-item:nth-child(3) { animation-delay: 100ms; }
+.activity-item:nth-child(4) { animation-delay: 150ms; }
+.activity-item:nth-child(5) { animation-delay: 200ms; }
+
+/* ==========================================================================
+   TABLE ROW — FADE IN STAGGER
+   ========================================================================== */
+
+@keyframes row-fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+tbody tr {
+    animation: row-fade-in 300ms ease both;
+}
+tbody tr:nth-child(1)  { animation-delay: 20ms; }
+tbody tr:nth-child(2)  { animation-delay: 50ms; }
+tbody tr:nth-child(3)  { animation-delay: 80ms; }
+tbody tr:nth-child(4)  { animation-delay: 110ms; }
+tbody tr:nth-child(5)  { animation-delay: 140ms; }
+tbody tr:nth-child(6)  { animation-delay: 170ms; }
+tbody tr:nth-child(7)  { animation-delay: 200ms; }
+tbody tr:nth-child(8)  { animation-delay: 230ms; }
+
+/* ==========================================================================
+   THREAT STATUS BADGE — CRITICAL PULSE RING
+   ========================================================================== */
+
+@keyframes critical-pulse-ring {
+    0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+    70%  { box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.threat-status-badge.status-critical {
+    animation: critical-pulse-ring 1.6s ease-in-out infinite;
+}
+
+@keyframes elevated-glow {
+    0%, 100% { box-shadow: 0 0 6px rgba(245, 158, 11, 0.3); }
+    50%       { box-shadow: 0 0 14px rgba(245, 158, 11, 0.6); }
+}
+
+.threat-status-badge.status-elevated {
+    animation: elevated-glow 2.4s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   SIDEBAR STATUS DOT — PULSING RING
+   ========================================================================== */
+
+@keyframes green-pulse-ring {
+    0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+    70%  { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.status-dot-green {
+    animation: green-pulse-ring 2s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   PIPELINE DOTS — HEARTBEAT PULSE
+   ========================================================================== */
+
+@keyframes pipeline-heartbeat {
+    0%, 100% { transform: scale(1);   opacity: 1; }
+    50%       { transform: scale(1.4); opacity: 0.7; }
+}
+
+.pipeline-dot {
+    animation: pipeline-heartbeat 2s ease-in-out infinite;
+}
+.pipeline-list > div:nth-child(1) .pipeline-dot { animation-delay: 0ms; }
+.pipeline-list > div:nth-child(2) .pipeline-dot { animation-delay: 300ms; }
+.pipeline-list > div:nth-child(3) .pipeline-dot { animation-delay: 600ms; }
+.pipeline-list > div:nth-child(4) .pipeline-dot { animation-delay: 900ms; }
+
+/* ==========================================================================
+   TOAST — SLIDE IN FROM RIGHT + PROGRESS BAR AUTO-DISMISS
+   ========================================================================== */
+
+@keyframes toast-slide-in {
+    from { opacity: 0; transform: translateX(32px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+.toast-card {
+    animation: toast-slide-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    overflow: hidden;
+}
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    border-radius: 0 0 6px 6px;
+    animation: toast-shrink 4.5s linear forwards;
+}
+
+@keyframes toast-shrink {
+    from { width: 100%; }
+    to   { width: 0%; }
+}
+
+.toast-attack  .toast-progress { background: var(--red); }
+.toast-success .toast-progress { background: var(--green); }
+.toast-live    .toast-progress { background: var(--green); }
+.toast-error   .toast-progress { background: var(--red); }
+.toast-info    .toast-progress { background: var(--blue); }
+
+/* ==========================================================================
+   NAV ITEM ACTIVE — SUBTLE LEFT GLOW LINE
+   ========================================================================== */
+
+.nav-item.active {
+    position: relative;
+}
+.nav-item.active::before {
+    content: "";
+    position: absolute;
+    left: -1px;
+    top: 20%;
+    bottom: 20%;
+    width: 2px;
+    border-radius: 2px;
+    background: var(--blue);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+}
+
+/* ==========================================================================
+   BRAND ICON — ROTATE HOVER + IDLE FLOAT
+   ========================================================================== */
+
+@keyframes brand-float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-2px); }
+}
+
+.brand-icon-box {
+    animation: brand-float 4s ease-in-out infinite;
+    transition: box-shadow 200ms ease;
+}
+.brand:hover .brand-icon-box {
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.5);
+}
+
+/* ==========================================================================
+   ATTACK CARD — RED BORDER FLASH ON HOVER
+   ========================================================================== */
+
+@keyframes attack-card-flash {
+    0%, 100% { border-color: var(--border-subtle); }
+    50%       { border-color: rgba(239, 68, 68, 0.4); }
+}
+
+/* ==========================================================================
+   BOOT SEQUENCE — MATRIX CHARACTER RAIN CANVAS
+   ========================================================================== */
+
+.boot-matrix-canvas {
+    position: absolute;
+    inset: 0;
+    opacity: 0.18;
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   PANEL — ENTER ANIMATION
+   ========================================================================== */
+
+@keyframes panel-enter {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.panel {
+    animation: panel-enter 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ==========================================================================
+   EVENT CARD — FADE IN GRID
+   ========================================================================== */
+
+@keyframes event-card-in {
+    from { opacity: 0; transform: scale(0.97); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.event-card {
+    animation: event-card-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ==========================================================================
+   LIVE BADGE — BLINK
+   ========================================================================== */
+
+@keyframes live-badge-blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+}
+
+.live-badge {
+    animation: live-badge-blink 1.5s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   REFRESH ICON — SPIN ON ACTIVE
+   ========================================================================== */
+
+@keyframes refresh-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.refreshing-icon {
+    animation: refresh-spin 600ms linear infinite;
+    display: inline-flex;
+}
+
+/* ==========================================================================
+   DRAWER — TRIAGE BADGE PULSE
+   ========================================================================== */
+
+.severity-tag.severity-critical {
+    animation: critical-pulse-ring 1.6s ease-in-out infinite;
+}
