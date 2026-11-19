@@ -106,6 +106,7 @@ def detect_brute_force(event):
     ):
         flagged_usernames[username] = current_time
 
+        # Distributed BF from many IPs targeting same user = CRITICAL
         return {
             "attack_type": "DISTRIBUTED_BRUTE_FORCE",
             "source_ip": ip,
@@ -113,7 +114,7 @@ def detect_brute_force(event):
             "target_user": username,
             "failed_attempts": len(username_attempts),
             "unique_ip_count": len(unique_ips),
-            "severity": "HIGH"
+            "severity": "CRITICAL"
         }
 
     return None

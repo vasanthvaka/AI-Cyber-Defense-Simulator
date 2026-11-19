@@ -173,6 +173,22 @@ class SecurityDatabase:
                 """
             )
 
+    def reset_database(self):
+
+        with self.connect() as connection:
+            connection.executescript(
+                """
+                DELETE FROM events;
+                DELETE FROM alerts;
+                DELETE FROM incidents;
+                DELETE FROM analyses;
+                DELETE FROM decisions;
+                DELETE FROM responses;
+                DELETE FROM audit_records;
+                VACUUM;
+                """
+            )
+
     def save_event(self, event):
 
         event = self._to_dictionary(

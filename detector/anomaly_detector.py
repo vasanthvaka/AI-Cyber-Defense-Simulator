@@ -115,10 +115,18 @@ def detect_anomaly(events):
     if not analysis["is_anomaly"]:
         return None
 
+    score = analysis["anomaly_score"]
+    if score < -0.10:
+        severity = "HIGH"
+    elif score < -0.05:
+        severity = "MEDIUM"
+    else:
+        severity = "LOW"
+
     return {
         "attack_type": "ANOMALOUS_BEHAVIOR",
         "detection_method": "ISOLATION_FOREST",
-        "severity": "MEDIUM",
+        "severity": severity,
         "anomaly_score": analysis["anomaly_score"],
         "event_count": analysis["event_count"],
         "source_ips": analysis["source_ips"],

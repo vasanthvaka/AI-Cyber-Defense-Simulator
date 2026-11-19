@@ -495,3 +495,64 @@ class SimulationController:
             "events_generated": self.live_status["events_generated"],
             "attacks_injected": self.live_status["attacks_injected"]
         }
+
+    def reset_simulation(self):
+
+        with self.lock:
+            if self.live_status["is_running"]:
+                self.stop_live_mode()
+
+            # 1. Clear database tables
+            self.database.reset_database()
+
+            # 2. Reset detectors in-memory tracking
+            try:
+                import detector.ddos_detector as ddos_det
+                import detector.brute_force_detector as bf_det
+                import detector.port_scan_detector as ps_det
+                import detector.process_detector as proc_det
+
+                ddos_det.requests_by_target.clear()
+                ddos_det.flagged_targets.clear()
+                bf_det.failed_attempts_by_ip.clear()
+                bf_det.failed_attempts_by_username.clear()
+                bf_det.flagged_ips.clear()
+                bf_det.flagged_usernames.clear()
+                ps_det.connection_attempts.clear()
+                ps_det.flagged_scanners.clear()
+                proc_det.flagged_processes.clear()
+            except Exception:
+                pass
+
+            # 3. Reset agents & coordinator
+            self.monitoring_agent = MonitoringAgent(
+                event_logger=self.log_event
+            )
+            self.coordinator = AgentCoordinator(
+                monitoring_agent=self.monitoring_agent,
+                database=self.database
+            )
+
+            # 4. Clear live log & status
+            self.live_log.clear()
+            self.live_status = {
+                "is_running": False,
+                "seed": None,
+                "started_at": None,
+                "events_generated": 0,
+                "attacks_injected": 0
+            }
+            self.current_operation = None
+            self.last_operation = "RESET"
+
+            # 5. Clear JSONL log file
+            if LOG_FILE.exists():
+                try:
+                    LOG_FILE.unlink()
+                except Exception:
+                    pass
+
+            return {
+                "status": "SUCCESS",
+                "message": "All security events, alerts, and incidents have been reset."
+            }

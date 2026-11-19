@@ -69,6 +69,12 @@ def detect_ddos(event):
     ):
         flagged_targets[target] = current_time
 
+        # Scale severity by volume: massive floods are CRITICAL
+        if len(recent_requests) >= 22 or len(unique_ips) >= 6:
+            severity = "CRITICAL"
+        else:
+            severity = "HIGH"
+
         return {
             "attack_type": "DDOS",
             "source_ips": sorted(unique_ips),
@@ -77,7 +83,7 @@ def detect_ddos(event):
             "request_count": len(recent_requests),
             "unique_ip_count": len(unique_ips),
             "time_window": TIME_WINDOW,
-            "severity": "HIGH"
+            "severity": severity
         }
 
     return None
