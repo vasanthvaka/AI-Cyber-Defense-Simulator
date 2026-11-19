@@ -320,7 +320,7 @@ Dashboard capabilities described by the code/project include:
 - `httpx` — local LLM API client
 
 ### Frontend
-- React 19 (dependencies in the uploaded archive)
+- React 19
 - Vite
 - JavaScript / JSX
 - CSS
@@ -374,8 +374,8 @@ AI-Cyber-Defense-Simulator/
 │   ├── architecture.md                    # Pipeline architecture notes
 │   └── demo_guide.md                     # Demonstration walkthrough
 ├── tests/                                 # Python unit and integration tests
-├── README.md
-└── (Python dependency manifest is not present in the provided ZIP)
+├── requirements.txt                       # Python dependencies
+└── README.md
 ```
 
 
@@ -385,8 +385,6 @@ AI-Cyber-Defense-Simulator/
 - Node.js **18+** and npm.
 - Windows PowerShell for the commands in the examples (macOS/Linux equivalents are included for virtual-environment activation).
 - Optional: Ollama and the `llama3.2` model for locally generated incident explanations.
-
-> **Dependency manifest note:** The project archive provided for this README update does not include a root `requirements.txt`, although the earlier README listed one. The Python packages below are based on imports found in the code. If you restore or add a dependency file, prefer using it to install pinned versions.
 
 ## Installation
 
@@ -413,11 +411,10 @@ source venv/bin/activate
 
 ### 3. Install Python dependencies
 
-Because the supplied ZIP does not include a `requirements.txt`, install the runtime dependencies directly into the active virtual environment:
-
+Install the pinned dependencies from `requirements.txt` into the active virtual environment:
 
 ```powershell
-python -m pip install fastapi uvicorn pydantic scikit-learn numpy scipy joblib httpx
+python -m pip install -r requirements.txt
 ```
 
 ### 4. Install dashboard packages
@@ -849,4 +846,3 @@ The project demo documentation previously reported 271 Python tests and six fron
 
 - [`docs/architecture.md`](docs/architecture.md) — detailed system architecture and processing pipeline.
 - [`docs/demo_guide.md`](docs/demo_guide.md) — walkthrough, expected detections/actions, and demonstration suggestions.
-
